@@ -6,6 +6,7 @@ import cookieParser from "cookie-parser";
 
 // Utiles
 import connectDB from "./config/db.js";
+import userRoutes from "./routes/userRoutes.js";
 
 
 dotenv.config();
@@ -19,5 +20,10 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
+app.use("/api/users", userRoutes);
 
-app.listen(port, () => console.log(`Serveur tournant sur le port: ${port}`));
+
+const __dirname = path.resolve();
+app.use("/uploads", express.static(path.join(__dirname + "/uploads")));
+
+app.listen(port, () => console.log(`Server running on port: ${port}`));

@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import Header from "../components/Header.jsx";
 
 const Home = () => {
     return (
@@ -10,63 +11,7 @@ const Home = () => {
                     className="theme-switch"
                     target="_blank"
                 >Gradient Color Option</Link>
-                <header className="header">
-                  <div className="toggle-btns">
-                    <Link id="toggle-sidebar" to="#">
-                      <i className="icon-list"></i>
-                    </Link>
-                    <a id="pin-sidebar" href="#">
-                      <i className="icon-list"></i>
-                    </a>
-                  </div>
-                  <div className="header-items">
-                    <div className="custom-search">
-                      <input
-                          type="text"
-                          className="search-query"
-                          placeholder="Search here ..."
-                      />
-                      <i className="icon-search1"></i>
-                    </div>
-                    <ul className="header-actions">
-                      <li className="dropdown">
-                        <a
-                            href="#"
-                            id="notifications"
-                            data-toggle="dropdown"
-                            aria-haspopup="true"
-                        >
-                          <i className="icon-bell"></i>
-                          <span className="count-label">8</span>
-                        </a>
-                        <div
-                            className="dropdown-menu dropdown-menu-right lrg"
-                            aria-labelledby="notifications"
-                        >
-                          <div className="dropdown-menu-header">Notifications (40)</div>
-                          <ul className="header-notifications">
-                            <li>
-                              <a href="#">
-                                <div className="user-img away">
-                                  <img src="img/user21.png" alt="User"/>
-                                </div>
-                                <div className="details">
-                                  <div className="user-title">Abbott</div>
-                                  <div className="noti-details">
-                                    Membership has been ended.
-                                  </div>
-                                  <div className="noti-date">Oct 20, 07:30 pm</div>
-                                </div>
-                              </a>
-                            </li>
-                            {/* More notification items */}
-                          </ul>
-                        </div>
-                      </li>
-                      {/* More header actions */}
-                    </ul>
-                  </div>
-                </header>
+                <Header/>
                 <div className="page-header">
                   <ol className="breadcrumb">
                     <li className="breadcrumb-item">Admin Dashboard</li>
