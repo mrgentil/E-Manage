@@ -1,5 +1,4 @@
 import {Link} from "react-router-dom";
-
 const Navigation = () => {
     return (
         <div>
@@ -38,7 +37,7 @@ const Navigation = () => {
                         <div className="sidebar-menu">
                             <ul>
                                 <li className="active">
-                                    <Link to="/" className="current-page">
+                                    <Link to="/home" className="current-page">
                                         <i className="icon-home2"></i>
                                         <span className="menu-text">Dashboard</span>
                                     </Link>

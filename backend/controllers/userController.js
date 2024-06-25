@@ -38,21 +38,18 @@ const createUser = asyncHandler(async (req, res) => {
 const loginUser = asyncHandler(async (req, res) => {
     const { email, password } = req.body;
 
-    console.log(email);
-    console.log(password);
+    console.log("Email:", email);
+    console.log("Password:", password);
 
     const existingUser = await User.findOne({ email });
 
     if (existingUser) {
-        const isPasswordValid = await bcrypt.compare(
-            password,
-            existingUser.password
-        );
+        const isPasswordValid = await bcrypt.compare(password, existingUser.password);
 
         if (isPasswordValid) {
             createToken(res, existingUser._id);
 
-            res.status(201).json({
+            return res.status(200).json({
                 _id: existingUser._id,
                 name: existingUser.name,
                 email: existingUser.email,
@@ -60,8 +57,13 @@ const loginUser = asyncHandler(async (req, res) => {
                 address: existingUser.address,
                 isAdmin: existingUser.isAdmin,
             });
-
+        } else {
+            res.status(401);
+            throw new Error("Invalid email or password");
         }
+    } else {
+        res.status(401);
+        throw new Error("Invalid email or password");
     }
 });
 
