@@ -11,14 +11,17 @@ const createUser = asyncHandler(async (req, res) => {
     console.log("Requête reçue pour créer un utilisateur :", req.body);
 
     if (!name || !email || !password || !phone || !address) {
-        res.status(400).send("Please fill all the inputs.");
-        return;
+
+        res.status(400);
+        throw new Error("Veuillez remplir tous les champs.");
+
     }
 
     const userExists = await User.findOne({email});
     if (userExists) {
-        res.status(400).send("User already exists");
-        return;
+        res.status(400);
+        throw new Error("L'utilisateur existe déjà");
+
     }
 
     try {
@@ -44,7 +47,7 @@ const createUser = asyncHandler(async (req, res) => {
         console.error("Erreur lors de la création de l'utilisateur :", error);
 
         res.status(400).json({
-            message: "Invalid user data",
+            message: "Données d'utilisateur invalides",
             error: error.message,
         });
     }

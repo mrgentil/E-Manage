@@ -6,9 +6,13 @@ import { Route, RouterProvider, createRoutesFromElements } from 'react-router';
 import { createBrowserRouter } from 'react-router-dom';
 import Home from './pages/Home.jsx';
 import Login from './pages/Login.jsx';
+import Register from "./pages/users/Register.jsx";
+import AllUsers from "./pages/users/AllUsers.jsx";
 import store from './redux/store';
 import { AuthProvider } from './features/Auth.jsx';
 import PrivateRoute from './components/PrivateRoute.jsx';
+
+
 
 const router = createBrowserRouter(
     createRoutesFromElements(
@@ -16,6 +20,8 @@ const router = createBrowserRouter(
             <Route index element={<Login />} />
             <Route element={<PrivateRoute />}>
                 <Route path="home" element={<Home />} />
+                <Route path="/register" element={<Register />} />
+                <Route path="/users" element={<AllUsers />} />
             </Route>
 
         </Route>
