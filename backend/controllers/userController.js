@@ -5,33 +5,27 @@ import createToken from "../utils/createToken.js";
 
 // Create a new user
 const createUser = asyncHandler(async (req, res) => {
-    const {name, email, password, phone, address, role, enterprise} = req.body;
+    const {name, email, password, phone, address} = req.body;
 
-    if (!name || !email || !password || !phone || !address || !role || !enterprise) {
-        res.status(400);
-        throw new Error("Veuillez remplir tous les champs.");
+    // Log les données reçues
+    console.log("Requête reçue pour créer un utilisateur :", req.body);
+
+    if (!name || !email || !password || !phone || !address) {
+        res.status(400).send("Please fill all the inputs.");
+        return;
     }
 
     const userExists = await User.findOne({email});
     if (userExists) {
-        res.status(400);
-        throw new Error("L'utilisateur existe déjà");
+        res.status(400).send("User already exists");
+        return;
     }
 
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
-
-    const newUser = new User({
-        name,
-        email,
-        phone,
-        address,
-        password: hashedPassword,
-        role,
-        enterprise,
-    });
-
     try {
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(password, salt);
+        const newUser = new User({name, email, phone, address, password: hashedPassword});
+
         await newUser.save();
         createToken(res, newUser._id);
 
@@ -42,12 +36,17 @@ const createUser = asyncHandler(async (req, res) => {
             phone: newUser.phone,
             address: newUser.address,
             isAdmin: newUser.isAdmin,
-            role: newUser.role,
-            enterprise: newUser.enterprise,
         });
+
+        console.log("Utilisateur créé avec succès :", newUser);
     } catch (error) {
-        res.status(400);
-        throw new Error("Données utilisateur invalides");
+        // Log l'erreur pour le débogage
+        console.error("Erreur lors de la création de l'utilisateur :", error);
+
+        res.status(400).json({
+            message: "Invalid user data",
+            error: error.message,
+        });
     }
 });
 
@@ -112,8 +111,7 @@ const getCurrentUserProfile = asyncHandler(async (req, res) => {
             phone: user.phone,
             address: user.address,
             isAdmin: user.isAdmin,
-            role: user.role,
-            enterprise: user.enterprise,
+
         });
     } else {
         res.status(404);
@@ -145,8 +143,7 @@ const updateCurrentUserProfile = asyncHandler(async (req, res) => {
             phone: updatedUser.phone,
             address: updatedUser.address,
             isAdmin: updatedUser.isAdmin,
-            role: updatedUser.role,
-            enterprise: updatedUser.enterprise,
+
         });
     } else {
         res.status(404);
@@ -194,8 +191,7 @@ const updateUserById = asyncHandler(async (req, res) => {
         user.phone = req.body.phone || user.phone;
         user.address = req.body.address || user.address;
         user.isAdmin = Boolean(req.body.isAdmin);
-        user.role = req.body.role || user.role;
-        user.enterprise = req.body.enterprise || user.enterprise;
+
 
         const updatedUser = await user.save();
 
@@ -206,8 +202,7 @@ const updateUserById = asyncHandler(async (req, res) => {
             phone: updatedUser.phone,
             address: updatedUser.address,
             isAdmin: updatedUser.isAdmin,
-            role: updatedUser.role,
-            enterprise: updatedUser.enterprise,
+
         });
     } else {
         res.status(404);
