@@ -1,226 +1,190 @@
-import User from "../models/userModel.js";
-import asyncHandler from "../middlewares/asyncHandler.js";
-import bcrypt from "bcryptjs";
-import createToken from "../utils/createToken.js";
+import User from '../models/userModel.js';
+import Role from '../models/roleModel.js';
+import bcrypt from 'bcryptjs';
+import fs from 'fs';
+import path from 'path';
+import jwt from 'jsonwebtoken';
 
-// Create a new user
-const createUser = asyncHandler(async (req, res) => {
-    const {name, email, password, phone, address} = req.body;
+const generateToken = (userId) => {
+    return jwt.sign({ id: userId }, process.env.JWT_SECRET, { expiresIn: '30d' });
+};
 
-    // Log les données reçues
-    console.log("Requête reçue pour créer un utilisateur :", req.body);
-
-    if (!name || !email || !password || !phone || !address) {
-
-        res.status(400);
-        throw new Error("Veuillez remplir tous les champs.");
-
-    }
-
-    const userExists = await User.findOne({email});
-    if (userExists) {
-        res.status(400);
-        throw new Error("L'utilisateur existe déjà");
-
-    }
+// Créer un utilisateur
+export const createUser = async (req, res) => {
+    const { name, email, phone, address, password, roles } = req.body;
+    const avatar = req.file ? req.file.path : null;
 
     try {
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(password, salt);
-        const newUser = new User({name, email, phone, address, password: hashedPassword});
+        const userExists = await User.findOne({ email });
 
-        await newUser.save();
-        createToken(res, newUser._id);
-
-        res.status(201).json({
-            _id: newUser._id,
-            name: newUser.name,
-            email: newUser.email,
-            phone: newUser.phone,
-            address: newUser.address,
-            isAdmin: newUser.isAdmin,
-        });
-
-        console.log("Utilisateur créé avec succès :", newUser);
-    } catch (error) {
-        // Log l'erreur pour le débogage
-        console.error("Erreur lors de la création de l'utilisateur :", error);
-
-        res.status(400).json({
-            message: "Données d'utilisateur invalides",
-            error: error.message,
-        });
-    }
-});
-
-// User login
-const loginUser = asyncHandler(async (req, res) => {
-    const {email, password} = req.body;
-
-    const existingUser = await User.findOne({email});
-
-    if (existingUser) {
-        const isPasswordValid = await bcrypt.compare(password, existingUser.password);
-
-        if (isPasswordValid) {
-            createToken(res, existingUser._id);
-
-            res.status(200).json({
-                _id: existingUser._id,
-                name: existingUser.name,
-                email: existingUser.email,
-                phone: existingUser.phone,
-                address: existingUser.address,
-                isAdmin: existingUser.isAdmin,
-                role: existingUser.role,
-                enterprise: existingUser.enterprise,
-            });
-            return;
-        } else {
-            res.status(401);
-            throw new Error("Mot de passe incorrect.");
+        if (userExists) {
+            return res.status(400).json({ message: 'User already exists' });
         }
-    } else {
-        res.status(401);
-        throw new Error("Utilisateur non trouvé.");
+
+        // Find the corresponding Role document
+        const role = await Role.findOne({ name: roles });
+
+        if (!role) {
+            return res.status(404).json({ message: 'Role not found' });
+        }
+
+        // Create a new user with the role
+        const user = await User.create({ name, email, phone, address, password, avatar, roles: [role._id] });
+
+        res.status(201).json(user);
+    } catch (error) {
+        res.status(500).json({ message: 'Server error', error });
     }
-});
+};
 
-// User logout
-const logoutCurrentUser = asyncHandler(async (req, res) => {
-    res.cookie("jwt", "", {
-        httpOnly: true,
-        expires: new Date(0),
-    });
+// Récupérer tous les utilisateurs
+export const getAllUsers = async (req, res) => {
+    try {
+        const users = await User.find().populate('roles');
+        res.status(200).json(users);
+    } catch (error) {
+        res.status(500).json({ message: 'Server error', error });
+    }
+};
 
-    res.status(200).json({message: "Déconnexion réussie"});
-});
+// Récupérer un utilisateur par ID
+export const getUserById = async (req, res) => {
+    try {
+        const user = await User.findById(req.params.id).populate('roles');
 
-// Get all users
-const getAllUsers = asyncHandler(async (req, res) => {
-    const users = await User.find({});
-    res.json(users);
-});
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
 
-// Get current user profile
-const getCurrentUserProfile = asyncHandler(async (req, res) => {
-    const user = await User.findById(req.user._id);
+        res.status(200).json(user);
+    } catch (error) {
+        res.status(500).json({ message: 'Server error', error });
+    }
+};
 
-    if (user) {
-        res.json({
+// Mettre à jour un utilisateur par ID
+export const updateUserById = async (req, res) => {
+    try {
+        const { name, email, phone, address, roles } = req.body;
+        const avatar = req.file ? req.file.path : null;
+
+        const user = await User.findById(req.params.id);
+
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        user.name = name || user.name;
+        user.email = email || user.email;
+        user.phone = phone || user.phone;
+        user.address = address || user.address;
+        user.roles = roles || user.roles;
+
+        if (avatar) {
+            if (user.avatar) {
+                fs.unlinkSync(user.avatar); // Supprimer l'ancien fichier avatar
+            }
+            user.avatar = avatar;
+        }
+
+        const updatedUser = await user.save();
+        res.status(200).json(updatedUser);
+    } catch (error) {
+        res.status(500).json({ message: 'Server error', error });
+    }
+};
+
+// Supprimer un utilisateur par ID
+export const deleteUserById = async (req, res) => {
+    try {
+        const user = await User.findById(req.params.id);
+
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        if (user.avatar) {
+            fs.unlinkSync(user.avatar); // Supprimer le fichier avatar
+        }
+
+        await user.remove();
+        res.status(200).json({ message: 'User deleted' });
+    } catch (error) {
+        res.status(500).json({ message: 'Server error', error });
+    }
+};
+
+// Connexion utilisateur
+export const loginUser = async (req, res) => {
+    const { email, password } = req.body;
+
+    try {
+        const user = await User.findOne({ email }).populate('roles');
+
+        if (!user) {
+            return res.status(401).json({ message: 'Invalid email or password' });
+        }
+
+        const isPasswordMatch = await user.comparePassword(password);
+
+        if (!isPasswordMatch) {
+            return res.status(401).json({ message: 'Invalid email or password' });
+        }
+
+        const token = generateToken(user._id);
+
+        res.status(200).json({
             _id: user._id,
             name: user.name,
             email: user.email,
             phone: user.phone,
             address: user.address,
-            isAdmin: user.isAdmin,
-
+            roles: user.roles,
+            avatar: user.avatar,
+            token,
         });
-    } else {
-        res.status(404);
-        throw new Error("Utilisateur non trouvé.");
+    } catch (error) {
+        res.status(500).json({ message: 'Server error', error });
     }
-});
+};
 
-// Update current user profile
-const updateCurrentUserProfile = asyncHandler(async (req, res) => {
-    const user = await User.findById(req.user._id);
+// Profil utilisateur
+export const getUserProfile = async (req, res) => {
+    try {
+        const user = await User.findById(req.user.id).populate('roles');
 
-    if (user) {
-        user.name = req.body.name || user.name;
-        user.email = req.body.email || user.email;
-        user.phone = req.body.phone || user.phone;
-        user.address = req.body.address || user.address;
-
-        if (req.body.password) {
-            const salt = await bcrypt.genSalt(10);
-            user.password = await bcrypt.hash(req.body.password, salt);
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
         }
 
-        const updatedUser = await user.save();
-
-        res.json({
-            _id: updatedUser._id,
-            name: updatedUser.name,
-            email: updatedUser.email,
-            phone: updatedUser.phone,
-            address: updatedUser.address,
-            isAdmin: updatedUser.isAdmin,
-
-        });
-    } else {
-        res.status(404);
-        throw new Error("Utilisateur non trouvé.");
+        res.status(200).json(user);
+    } catch (error) {
+        res.status(500).json({ message: 'Server error', error });
     }
-});
+};
 
-// Delete user by ID
-const deleteUserById = asyncHandler(async (req, res) => {
-    const user = await User.findById(req.params.id);
+// Middleware pour la protection des routes
+export const protect = async (req, res, next) => {
+    let token;
 
-    if (user) {
-        if (user.isAdmin) {
-            res.status(400);
-            throw new Error("Impossible de supprimer un utilisateur administrateur.");
+    if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+        try {
+            token = req.headers.authorization.split(' ')[1];
+            const decoded = jwt.verify(token, process.env.JWT_SECRET);
+            req.user = await User.findById(decoded.userid).select('-password');
+            next();
+        } catch (error) {
+            res.status(401).json({ message: 'Not authorized, token failed' });
         }
-
-        await user.remove();
-        res.json({message: "Utilisateur supprimé avec succès"});
-    } else {
-        res.status(404);
-        throw new Error("Utilisateur non trouvé.");
     }
-});
 
-// Get user by ID
-const getUserById = asyncHandler(async (req, res) => {
-    const user = await User.findById(req.params.id).select("-password");
-
-    if (user) {
-        res.json(user);
-    } else {
-        res.status(404);
-        throw new Error("Utilisateur non trouvé.");
+    if (!token) {
+        res.status(401).json({ message: 'Not authorized, no token' });
     }
-});
+};
 
-// Update user by ID
-const updateUserById = asyncHandler(async (req, res) => {
-    const user = await User.findById(req.params.id);
-
-    if (user) {
-        user.name = req.body.name || user.name;
-        user.email = req.body.email || user.email;
-        user.phone = req.body.phone || user.phone;
-        user.address = req.body.address || user.address;
-        user.isAdmin = Boolean(req.body.isAdmin);
-
-
-        const updatedUser = await user.save();
-
-        res.json({
-            _id: updatedUser._id,
-            name: updatedUser.name,
-            email: updatedUser.email,
-            phone: updatedUser.phone,
-            address: updatedUser.address,
-            isAdmin: updatedUser.isAdmin,
-
-        });
-    } else {
-        res.status(404);
-        throw new Error("Utilisateur non trouvé.");
-    }
-});
-
-export {
-    createUser,
-    loginUser,
-    logoutCurrentUser,
-    getAllUsers,
-    getCurrentUserProfile,
-    updateCurrentUserProfile,
-    deleteUserById,
-    getUserById,
-    updateUserById,
+// Déconnexion utilisateur
+export const logoutUser = async (req, res) => {
+    // La déconnexion côté serveur peut être gérée en informant le client de supprimer le jeton
+    res.status(200).json({ message: 'User logged out' });
 };
