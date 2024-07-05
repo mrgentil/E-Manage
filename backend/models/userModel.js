@@ -8,7 +8,8 @@ const userSchema = new mongoose.Schema({
     address: { type: String, required: true },
     password: { type: String, required: true },
     avatar: { type: String },
-    roles: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Role' }],
+    role: { type: mongoose.Schema.Types.ObjectId, ref: 'Role', required: true },
+    entreprise: { type: mongoose.Schema.Types.ObjectId, ref: 'Entreprise', required: true },
 }, {
     timestamps: true,
 });
@@ -16,7 +17,7 @@ const userSchema = new mongoose.Schema({
 // Middleware pour hacher le mot de passe avant de sauvegarder
 userSchema.pre('save', async function (next) {
     if (!this.isModified('password')) {
-        next();
+        return next();
     }
 
     const salt = await bcrypt.genSalt(10);

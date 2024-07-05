@@ -27,8 +27,11 @@ const Home = () => {
                     </div>
                     <div className="user-info">
                         <h3>Welcome, {userInfo?.name}!</h3>
-                        <p>Email: {userInfo?.email}</p>
-                        <p>Role: {userInfo?.isAdmin ? "Admin" : "User"}</p>
+                        <p>Email : {userInfo?.email}</p>
+                        <p>
+                            Roles :{" "}
+                            {userInfo?.roles?.map((role) => role.name).join(', ')}
+                        </p>
                     </div>
                 </div>
             </div>

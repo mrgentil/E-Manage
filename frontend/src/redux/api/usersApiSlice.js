@@ -1,32 +1,32 @@
-import { apiSlice } from "./apiSlice";
-import { USERS_URL } from "../constants";
+import { apiSlice } from './apiSlice';
+import { BASE_URL, USERS_URL } from '../constants';
 
 export const userApiSlice = apiSlice.injectEndpoints({
     endpoints: (builder) => ({
         login: builder.mutation({
             query: (data) => ({
-                url: `${USERS_URL}/auth`,
-                method: "POST",
+                url: `${USERS_URL}/login`,
+                method: 'POST',
                 body: data,
             }),
         }),
         register: builder.mutation({
             query: (data) => ({
                 url: `${USERS_URL}`,
-                method: "POST",
+                method: 'POST',
                 body: data,
             }),
         }),
         logout: builder.mutation({
             query: () => ({
                 url: `${USERS_URL}/logout`,
-                method: "POST",
+                method: 'POST',
             }),
         }),
         profile: builder.mutation({
             query: (data) => ({
                 url: `${USERS_URL}/profile`,
-                method: "PUT",
+                method: 'PUT',
                 body: data,
             }),
         }),
@@ -34,13 +34,13 @@ export const userApiSlice = apiSlice.injectEndpoints({
             query: () => ({
                 url: USERS_URL,
             }),
-            providesTags: ["User"],
+            providesTags: ['User'],
             keepUnusedDataFor: 5,
         }),
         deleteUser: builder.mutation({
             query: (userId) => ({
                 url: `${USERS_URL}/${userId}`,
-                method: "DELETE",
+                method: 'DELETE',
             }),
         }),
         getUserDetails: builder.query({
@@ -52,10 +52,15 @@ export const userApiSlice = apiSlice.injectEndpoints({
         updateUser: builder.mutation({
             query: (data) => ({
                 url: `${USERS_URL}/${data.userId}`,
-                method: "PUT",
+                method: 'PUT',
                 body: data,
             }),
-            invalidatesTags: ["User"],
+            invalidatesTags: ['User'],
+        }),
+        getRoles: builder.query({
+            query: () => ({
+                url: `${BASE_URL}/api/roles`,
+            }),
         }),
     }),
 });
@@ -69,4 +74,5 @@ export const {
     useDeleteUserMutation,
     useUpdateUserMutation,
     useGetUserDetailsQuery,
+    useGetRolesQuery,
 } = userApiSlice;
