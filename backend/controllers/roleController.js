@@ -22,7 +22,20 @@ export const createRole = async (req, res) => {
 // Récupérer tous les rôles
 export const getAllRoles = async (req, res) => {
     try {
-        const roles = await Role.find();
+        const userRole = req.user.role; // Récupère le rôle de l'utilisateur connecté depuis la requête (par exemple, via JWT ou session)
+
+        let roles = await Role.find();
+
+        // Filtrer les rôles en fonction du rôle de l'utilisateur connecté
+        if (userRole === 'Super Administrateur') {
+            // Si l'utilisateur est Super Administrateur, retourner tous les rôles
+            roles = roles.map(role => ({ _id: role._id, name: role.name }));
+        } else if (userRole === 'Administrateur') {
+            // Si l'utilisateur est Administrateur, filtrer les rôles pour exclure Super Administrateur et Administrateur
+            roles = roles.filter(role => role.name !== 'Super Administrateur' && role.name !== 'Administrateur')
+                .map(role => ({ _id: role._id, name: role.name }));
+        }
+
         res.status(200).json(roles);
     } catch (error) {
         res.status(500).json({ message: 'Server error', error });

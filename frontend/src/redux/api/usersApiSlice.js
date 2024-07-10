@@ -62,6 +62,11 @@ export const userApiSlice = apiSlice.injectEndpoints({
                 url: `${BASE_URL}/api/roles`,
             }),
         }),
+        getEntreprises: builder.query({
+            query: () => ({
+                url: `${BASE_URL}/api/entreprises`,
+            }),
+        }),
     }),
 });
 
@@ -75,4 +80,5 @@ export const {
     useUpdateUserMutation,
     useGetUserDetailsQuery,
     useGetRolesQuery,
+    useGetEntreprisesQuery,
 } = userApiSlice;

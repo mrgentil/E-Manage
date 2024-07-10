@@ -15,13 +15,16 @@ const generateToken = (userId) => {
 export const createUser = asyncHandler(async (req, res) => {
     const { name, email, phone, address, password, role, entreprise } = req.body;
 
-    const roleExists = await Role.findOne({ name: role });
+    console.log('Role from request:', role); // Debug log
+    const roleExists = await Role.findOne({ _id: role });
+    console.log('Role exists:', roleExists); // Debug log
+
     if (!roleExists) {
         res.status(400);
         throw new Error('Role not found');
     }
 
-    const entrepriseExists = await Entreprise.findOne({ name: entreprise });
+    const entrepriseExists = await Entreprise.findOne({ _id: entreprise });
     if (!entrepriseExists) {
         res.status(400);
         throw new Error('Entreprise not found');
@@ -61,15 +64,25 @@ export const createUser = asyncHandler(async (req, res) => {
 });
 
 
+
 // Récupérer tous les utilisateurs
 export const getAllUsers = async (req, res) => {
     try {
-        const users = await User.find().populate('role').populate('entreprise');
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 3;
+
+        const users = await User.find()
+            .populate('role')
+            .populate('entreprise')
+            .skip((page - 1) * limit)
+            .limit(limit);
+
         res.status(200).json(users);
     } catch (error) {
         res.status(500).json({ message: 'Server error', error });
     }
 };
+
 
 
 // Récupérer un utilisateur par ID
@@ -88,7 +101,7 @@ export const getUserById = async (req, res) => {
 };
 
 // Mettre à jour un utilisateur par ID
-export const updateUserById = async (req, res) => {
+export const updateUserById = asyncHandler(async (req, res) => {
     try {
         const { name, email, phone, address, role, entreprise } = req.body;
         const avatar = req.file ? req.file.path : null;
@@ -100,7 +113,7 @@ export const updateUserById = async (req, res) => {
         }
 
         if (role) {
-            const roleExists = await Role.findOne({ name: role });
+            const roleExists = await Role.findById(role);
             if (!roleExists) {
                 res.status(400);
                 throw new Error('Role not found');
@@ -109,7 +122,7 @@ export const updateUserById = async (req, res) => {
         }
 
         if (entreprise) {
-            const entrepriseExists = await Entreprise.findOne({ name: entreprise });
+            const entrepriseExists = await Entreprise.findById(entreprise);
             if (!entrepriseExists) {
                 res.status(400);
                 throw new Error('Entreprise not found');
@@ -134,24 +147,29 @@ export const updateUserById = async (req, res) => {
     } catch (error) {
         res.status(500).json({ message: 'Server error', error });
     }
-};
+});
 
 // Supprimer un utilisateur par ID
 export const deleteUserById = async (req, res) => {
     try {
+        console.log(`Trying to delete user with ID: ${req.params.id}`);
         const user = await User.findById(req.params.id);
 
         if (!user) {
+            console.log(`User with ID ${req.params.id} not found`);
             return res.status(404).json({ message: 'User not found' });
         }
 
         if (user.avatar) {
+            console.log(`Deleting avatar for user with ID: ${req.params.id}`);
             fs.unlinkSync(user.avatar); // Supprimer le fichier avatar
         }
 
         await user.remove();
+        console.log(`User with ID ${req.params.id} deleted`);
         res.status(200).json({ message: 'User deleted' });
     } catch (error) {
+        console.error(`Error deleting user: ${error}`);
         res.status(500).json({ message: 'Server error', error });
     }
 };

@@ -5,6 +5,9 @@ import Header from "../components/Header.jsx";
 const Home = () => {
     const { userInfo } = useSelector((state) => state.auth);
 
+    // Vérifie si userInfo.role est un tableau ou non
+    const roles = Array.isArray(userInfo?.roles) ? userInfo.roles.map(role => role.name).join(', ') : '';
+
     return (
         <div className="page-wrapper">
             <div className="page-content">
@@ -27,10 +30,12 @@ const Home = () => {
                     </div>
                     <div className="user-info">
                         <h3>Welcome, {userInfo?.name}!</h3>
-                        <p>Email : {userInfo?.email}</p>
+                        <p>Email: {userInfo?.email}</p>
                         <p>
-                            Roles :{" "}
-                            {userInfo?.roles?.map((role) => role.name).join(', ')}
+                            Roles: {roles}
+                        </p>
+                        <p>
+                            Entreprise: {userInfo?.entreprise?.name}
                         </p>
                     </div>
                 </div>

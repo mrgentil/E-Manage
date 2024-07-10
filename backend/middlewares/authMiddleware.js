@@ -1,39 +1,36 @@
 import jwt from 'jsonwebtoken';
+import asyncHandler from 'express-async-handler';
 import User from '../models/userModel.js';
 
-export const authenticate = async (req, res, next) => {
+const protect = asyncHandler(async (req, res, next) => {
     let token;
 
-    // Vérifier si le token est dans les headers Authorization
-    if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+    if (
+        req.headers.authorization &&
+        req.headers.authorization.startsWith('Bearer')
+    ) {
         try {
-            // Extraire le token du header
             token = req.headers.authorization.split(' ')[1];
-
-            // Vérifier et décoder le token
             const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-            // Ajouter l'utilisateur au request object
-            req.user = await User.findById(decoded.userId).select('-password');
+            req.user = await User.findById(decoded.id).select('-password');
 
-            if (!req.user) {
-                return res.status(401).json({ message: 'User not found' });
-            }
-
-            next(); // Passer au middleware suivant si l'utilisateur est authentifié
+            next();
         } catch (error) {
-            console.error('Token verification failed:', error);
-            return res.status(401).json({ message: 'Not authorized, token failed' });
+            console.error(error);
+            res.status(401).json({ message: 'Not authorized, token failed' });
         }
     } else {
-        return res.status(401).json({ message: 'Not authorized, no token' });
+        res.status(401).json({ message: 'Not authorized, no token' });
+    }
+});
+
+const admin = (req, res, next) => {
+    if (req.user && req.user.role === 'admin') {
+        next();
+    } else {
+        res.status(401).json({ message: 'Not authorized as an admin' });
     }
 };
 
-export const authorizeAdmin = (req, res, next) => {
-    if (req.user && req.user.isAdmin) {
-        next(); // Passer au middleware suivant si l'utilisateur est un admin
-    } else {
-        return res.status(403).json({ message: 'Not authorized as an admin' });
-    }
-};
+export { protect, admin };

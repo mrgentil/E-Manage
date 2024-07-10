@@ -2,14 +2,13 @@ import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
 
 const userSchema = new mongoose.Schema({
-    name: { type: String, required: true },
-    email: { type: String, required: true, unique: true },
-    phone: { type: String, required: true },
-    address: { type: String, required: true },
+    name: String,
+    email: String,
+    phone: String,
+    address: String,
+    role: { type: String, enum: ['Admin', 'Recruteur', 'Employe', 'Formateur', 'DirecteurRH'] },
+    entreprise: { type: Schema.Types.ObjectId, ref: 'Entreprise' },
     password: { type: String, required: true },
-    avatar: { type: String },
-    role: { type: mongoose.Schema.Types.ObjectId, ref: 'Role', required: true },
-    entreprise: { type: mongoose.Schema.Types.ObjectId, ref: 'Entreprise', required: true },
 }, {
     timestamps: true,
 });

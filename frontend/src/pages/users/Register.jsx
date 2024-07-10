@@ -1,11 +1,9 @@
-import Header from "../../components/Header.jsx";
-import { Link, useNavigate } from "react-router-dom";
-import { useState } from "react";
-import { useDispatch } from "react-redux";
+import React, { useState, useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import Loader from "../../components/Loader";
 import { useRegisterMutation, useGetRolesQuery } from "../../redux/api/usersApiSlice";
-import { setCredentials } from '../../features/authSlice.js';
 import { toast } from "react-toastify";
+import Select from "react-select";
 
 const Register = () => {
     const [name, setName] = useState('');
@@ -14,12 +12,35 @@ const Register = () => {
     const [address, setAddress] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
-    const [selectedRole, setSelectedRole] = useState('');
+    const [selectedRole, setSelectedRole] = useState(null);
+    const [selectedEntreprise, setSelectedEntreprise] = useState(null);
 
     const { data: roles, isLoading: rolesLoading } = useGetRolesQuery();
     const [register, { isLoading }] = useRegisterMutation();
-    const navigate = useNavigate();
     const dispatch = useDispatch();
+
+    const currentUserRole = useSelector(state => state.auth.role); // Récupérer le rôle de l'utilisateur connecté
+
+    useEffect(() => {
+        // Sélectionner par défaut le premier rôle disponible si aucun rôle n'est déjà sélectionné
+        if (roles && roles.length > 0 && !selectedRole) {
+            setSelectedRole({ value: roles[0]._id, label: roles[0].name });
+        }
+    }, [roles, selectedRole]);
+
+    // Filtrer les options de rôle pour exclure celui de l'utilisateur connecté
+    const filteredRoleOptions = roles?.filter(role => role.name !== currentUserRole)?.map(role => ({
+        value: role._id,
+        label: role.name
+    })) || [];
+
+    const handleRoleChange = (selectedOption) => {
+        setSelectedRole(selectedOption);
+    };
+
+    const handleEntrepriseChange = (selectedOption) => {
+        setSelectedEntreprise(selectedOption);
+    };
 
     const submitHandler = async (e) => {
         e.preventDefault();
@@ -28,25 +49,36 @@ const Register = () => {
             return;
         }
 
-        const userData = { name, email, phone, address, password, role: selectedRole };
-        console.log('Sending registration request:', userData); // Debug log
+        const userData = {
+            name,
+            email,
+            phone,
+            address,
+            password,
+            role: selectedRole?.value,
+            entreprise: selectedEntreprise?.value
+        };
+
+        console.log('Sending registration request:', userData);
 
         try {
-            const res = await register(userData).unwrap();
-            dispatch(setCredentials({ ...res }));
+            const res = await register(userData).unwrap().data;
             toast.success("Utilisateur enregistré avec succès");
-            navigate('/');
+            // Dispatch an action to set credentials or handle authentication
         } catch (err) {
             console.error("Registration error:", err);
             toast.error(err.data?.message || "Une erreur s'est produite");
         }
     };
 
+    if (rolesLoading) {
+        return <Loader />;
+    }
+
     return (
         <div className="page-wrapper">
             <div className="page-content">
                 <div className="main-container">
-                    <Header />
                     <div className="page-header">
                         <ol className="breadcrumb">
                             <li className="breadcrumb-item">Ajouter un utilisateur</li>
@@ -138,23 +170,26 @@ const Register = () => {
                                             </div>
                                             <div className="col-xl-4 col-lg-4 col-md-4 col-sm-4 col-12">
                                                 <div className="form-group">
-                                                    <label htmlFor="inputRole">Role</label>
-                                                    <select
-                                                        className="form-control"
+                                                    <label htmlFor="inputRole">Rôle</label>
+                                                    <Select
                                                         id="inputRole"
                                                         value={selectedRole}
-                                                        onChange={(e) => setSelectedRole(e.target.value)}
-                                                    >
-                                                        {rolesLoading ? (
-                                                            <option>Loading...</option>
-                                                        ) : (
-                                                            roles?.map((role) => (
-                                                                <option key={role._id} value={role._id}>
-                                                                    {role.name}
-                                                                </option>
-                                                            ))
-                                                        )}
-                                                    </select>
+                                                        onChange={handleRoleChange}
+                                                        options={filteredRoleOptions}
+                                                        placeholder="Sélectionner un rôle..."
+                                                    />
+                                                </div>
+                                            </div>
+                                            <div className="col-xl-4 col-lg-4 col-md-4 col-sm-4 col-12">
+                                                <div className="form-group">
+                                                    <label htmlFor="inputEntreprise">Entreprise</label>
+                                                    <Select
+                                                        id="inputEntreprise"
+                                                        value={selectedEntreprise}
+                                                        onChange={handleEntrepriseChange}
+                                                        options={entrepriseOptions}
+                                                        placeholder="Sélectionner une entreprise..."
+                                                    />
                                                 </div>
                                             </div>
                                         </div>

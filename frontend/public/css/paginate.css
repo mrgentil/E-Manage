@@ -1,0 +1,24 @@
+/* styles.css (ou un nom approprié pour votre projet) */
+.pagination-buttons {
+    margin-top: 20px;
+    text-align: center;
+}
+
+.pagination-buttons button {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    margin: 0 5px;
+    cursor: pointer;
+    outline: none;
+}
+
+.pagination-buttons button:hover {
+    background-color: #0056b3;
+}
+
+.pagination-buttons button:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+}
