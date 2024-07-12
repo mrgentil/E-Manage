@@ -1,29 +1,19 @@
 import express from 'express';
-import {
-    createUser,
-    getAllUsers,
-    getUserById,
-    updateUserById,
-    deleteUserById, protect, getUserProfile, logoutUser, loginUser,
-} from '../controllers/userController.js';
-import upload from '../middlewares/uploadMiddleware.js';
+import { registerUser, loginUser, getUserProfile, updateUserProfile, getUsers, deleteUser } from '../controllers/userController.js';
+import { protect, admin } from '../middlewares/authMiddleware.js';
 
 const router = express.Router();
 
-// Définir d'abord la route pour le profil utilisateur
-router.get('/profile', protect, getUserProfile);
-
-// Ensuite, définir les routes pour CRUD des utilisateurs
-router.route('/')
-    .post(upload.single('avatar'), createUser)
-    .get(getAllUsers);
-
-router.route('/:id')
-    .get(getUserById)
-    .put(upload.single('avatar'), updateUserById)
-    .delete(deleteUserById);
-
+// Routes publiques
+router.post('/register', registerUser);
 router.post('/login', loginUser);
-router.post('/logout', logoutUser);
+
+// Routes protégées
+router.get('/profile', protect, getUserProfile);
+router.put('/profile', protect, updateUserProfile);
+
+// Routes admin
+router.get('/', protect, admin, getUsers);
+router.delete('/:id', protect, admin, deleteUser);
 
 export default router;

@@ -1,251 +1,130 @@
 import User from '../models/userModel.js';
-import Role from '../models/roleModel.js';
 import Entreprise from '../models/entrepriseModel.js';
-import bcrypt from 'bcryptjs';
-import fs from 'fs';
-import path from 'path';
 import jwt from 'jsonwebtoken';
-import asyncHandler from 'express-async-handler';
 
-const generateToken = (userId) => {
-    return jwt.sign({ id: userId }, process.env.JWT_SECRET, { expiresIn: '30d' });
-};
+// Inscription
+export const registerUser = async (req, res) => {
+    try {
+        const { name, email, phone, address, role, entreprise, password } = req.body;
 
-// Créer un utilisateur
-export const createUser = asyncHandler(async (req, res) => {
-    const { name, email, phone, address, password, role, entreprise } = req.body;
+        // Vérifier si l'utilisateur existe déjà
+        const userExists = await User.findOne({ email });
+        if (userExists) {
+            return res.status(400).json({ message: 'Cet utilisateur existe déjà' });
+        }
 
-    console.log('Role from request:', role); // Debug log
-    const roleExists = await Role.findOne({ _id: role });
-    console.log('Role exists:', roleExists); // Debug log
+        // Trouver l'entreprise par son nom
+        const entrepriseDoc = await Entreprise.findOne({ name: entreprise });
+        if (!entrepriseDoc) {
+            return res.status(404).json({ message: 'Entreprise non trouvée' });
+        }
 
-    if (!roleExists) {
-        res.status(400);
-        throw new Error('Role not found');
-    }
-
-    const entrepriseExists = await Entreprise.findOne({ _id: entreprise });
-    if (!entrepriseExists) {
-        res.status(400);
-        throw new Error('Entreprise not found');
-    }
-
-    const userExists = await User.findOne({ email });
-    if (userExists) {
-        res.status(400);
-        throw new Error('User already exists');
-    }
-
-    const user = await User.create({
-        name,
-        email,
-        phone,
-        address,
-        password,
-        role: roleExists._id,
-        entreprise: entrepriseExists._id
-    });
-
-    if (user) {
-        res.status(201).json({
-            _id: user._id,
-            name: user.name,
-            email: user.email,
-            phone: user.phone,
-            address: user.address,
-            role: user.role,
-            entreprise: user.entreprise,
-            token: generateToken(user._id),
+        // Créer un nouvel utilisateur avec l'identifiant de l'entreprise
+        const user = new User({
+            name,
+            email,
+            phone,
+            address,
+            role,
+            entreprise: entrepriseDoc._id, // Utiliser l'ObjectId de l'entreprise
+            password
         });
-    } else {
-        res.status(400);
-        throw new Error('Invalid user data');
-    }
-});
+        await user.save();
 
+        // Générer un token
+        const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '1h' });
 
-
-// Récupérer tous les utilisateurs
-export const getAllUsers = async (req, res) => {
-    try {
-        const page = parseInt(req.query.page) || 1;
-        const limit = parseInt(req.query.limit) || 3;
-
-        const users = await User.find()
-            .populate('role')
-            .populate('entreprise')
-            .skip((page - 1) * limit)
-            .limit(limit);
-
-        res.status(200).json(users);
-    } catch (error) {
-        res.status(500).json({ message: 'Server error', error });
+        res.status(201).json({ token, user });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
     }
 };
 
 
-
-// Récupérer un utilisateur par ID
-export const getUserById = async (req, res) => {
-    try {
-        const user = await User.findById(req.params.id).populate('role').populate('entreprise');
-
-        if (!user) {
-            return res.status(404).json({ message: 'User not found' });
-        }
-
-        res.status(200).json(user);
-    } catch (error) {
-        res.status(500).json({message: 'Server error', error});
-    }
-};
-
-// Mettre à jour un utilisateur par ID
-export const updateUserById = asyncHandler(async (req, res) => {
-    try {
-        const { name, email, phone, address, role, entreprise } = req.body;
-        const avatar = req.file ? req.file.path : null;
-
-        const user = await User.findById(req.params.id);
-
-        if (!user) {
-            return res.status(404).json({ message: 'User not found' });
-        }
-
-        if (role) {
-            const roleExists = await Role.findById(role);
-            if (!roleExists) {
-                res.status(400);
-                throw new Error('Role not found');
-            }
-            user.role = roleExists._id;
-        }
-
-        if (entreprise) {
-            const entrepriseExists = await Entreprise.findById(entreprise);
-            if (!entrepriseExists) {
-                res.status(400);
-                throw new Error('Entreprise not found');
-            }
-            user.entreprise = entrepriseExists._id;
-        }
-
-        user.name = name || user.name;
-        user.email = email || user.email;
-        user.phone = phone || user.phone;
-        user.address = address || user.address;
-
-        if (avatar) {
-            if (user.avatar) {
-                fs.unlinkSync(user.avatar); // Supprimer l'ancien fichier avatar
-            }
-            user.avatar = avatar;
-        }
-
-        const updatedUser = await user.save();
-        res.status(200).json(updatedUser);
-    } catch (error) {
-        res.status(500).json({ message: 'Server error', error });
-    }
-});
-
-// Supprimer un utilisateur par ID
-export const deleteUserById = async (req, res) => {
-    try {
-        console.log(`Trying to delete user with ID: ${req.params.id}`);
-        const user = await User.findById(req.params.id);
-
-        if (!user) {
-            console.log(`User with ID ${req.params.id} not found`);
-            return res.status(404).json({ message: 'User not found' });
-        }
-
-        if (user.avatar) {
-            console.log(`Deleting avatar for user with ID: ${req.params.id}`);
-            fs.unlinkSync(user.avatar); // Supprimer le fichier avatar
-        }
-
-        await user.remove();
-        console.log(`User with ID ${req.params.id} deleted`);
-        res.status(200).json({ message: 'User deleted' });
-    } catch (error) {
-        console.error(`Error deleting user: ${error}`);
-        res.status(500).json({ message: 'Server error', error });
-    }
-};
-
-// Connexion utilisateur
+// Connexion
 export const loginUser = async (req, res) => {
-    const {email, password} = req.body;
-
     try {
-        const user = await User.findOne({ email }).populate('role').populate('entreprise');
+        const { email, password } = req.body;
 
+        // Vérifier si l'utilisateur existe
+        const user = await User.findOne({ email });
         if (!user) {
-            return res.status(401).json({ message: 'Invalid email or password' });
+            return res.status(404).json({ message: 'Utilisateur non trouvé' });
         }
 
-        const isPasswordMatch = await user.comparePassword(password);
-
-        if (!isPasswordMatch) {
-            return res.status(401).json({ message: 'Invalid email or password' });
+        // Vérifier le mot de passe
+        const isMatch = await user.comparePassword(password);
+        if (!isMatch) {
+            return res.status(400).json({ message: 'Mot de passe incorrect' });
         }
 
-        const token = generateToken(user._id);
+        // Générer un token
+        const token = jwt.sign({ id: user._id, role: user.role }, 'votre_secret', { expiresIn: '1h' });
 
-        res.status(200).json({
-            _id: user._id,
-            name: user.name,
-            email: user.email,
-            phone: user.phone,
-            address: user.address,
-            role: user.role,
-            entreprise: user.entreprise,
-            avatar: user.avatar,
-            token,
-        });
-    } catch (error) {
-        res.status(500).json({ message: 'Server error', error });
+        res.status(200).json({ token, user });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
     }
 };
 
 // Profil utilisateur
 export const getUserProfile = async (req, res) => {
     try {
-        const user = await User.findById(req.user.id).populate('role').populate('entreprise');
+        const user = await User.findById(req.user.id).select('-password');
+        res.status(200).json(user);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+// Mise à jour du profil utilisateur
+export const updateUserProfile = async (req, res) => {
+    try {
+        const user = await User.findById(req.user.id);
 
         if (!user) {
-            return res.status(404).json({ message: 'User not found' });
+            return res.status(404).json({ message: 'Utilisateur non trouvé' });
         }
 
-        res.status(200).json(user);
-    } catch (error) {
-        res.status(500).json({ message: 'Server error', error });
+        user.name = req.body.name || user.name;
+        user.email = req.body.email || user.email;
+        user.phone = req.body.phone || user.phone;
+        user.address = req.body.address || user.address;
+        user.entreprise = req.body.entreprise || user.entreprise;
+
+        if (req.body.password) {
+            user.password = req.body.password;
+        }
+
+        const updatedUser = await user.save();
+        res.status(200).json(updatedUser);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
     }
 };
 
-// Middleware pour la protection des routes
-export const protect = async (req, res, next) => {
-    let token;
-
-    if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
-        try {
-            token = req.headers.authorization.split(' ')[1];
-            const decoded = jwt.verify(token, process.env.JWT_SECRET);
-            req.user = await User.findById(decoded.id).select('-password');
-            next();
-        } catch (error) {
-            res.status(401).json({ message: 'Not authorized, token failed' });
-        }
-    }
-
-    if (!token) {
-        res.status(401).json({ message: 'Not authorized, no token' });
+// Liste des utilisateurs (par exemple pour un Admin)
+export const getUsers = async (req, res) => {
+    try {
+        const users = await User.find().select('-password');
+        res.status(200).json(users);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
     }
 };
 
-// Déconnexion utilisateur
-export const logoutUser = async (req, res) => {
-    // La déconnexion côté serveur peut être gérée en informant le client de supprimer le jeton
-    res.status(200).json({ message: 'User logged out' });
+// Suppression d'un utilisateur
+export const deleteUser = async (req, res) => {
+    try {
+        const user = await User.findById(req.params.id);
+
+        if (!user) {
+            return res.status(404).json({ message: 'Utilisateur non trouvé' });
+        }
+
+        await user.remove();
+        res.status(200).json({ message: 'Utilisateur supprimé avec succès' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
 };

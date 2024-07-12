@@ -1,4 +1,4 @@
-import mongoose from 'mongoose';
+import mongoose, {Schema} from 'mongoose';
 
 const entrepriseSchema = new mongoose.Schema({
     name: { type: String, required: true, unique: true },
@@ -10,7 +10,6 @@ const entrepriseSchema = new mongoose.Schema({
     website: String,
     logo: String,
     description: String,
-    employes: [{ type: Schema.Types.ObjectId, ref: 'Employe' }],
 }, {
     timestamps: true,
 });
