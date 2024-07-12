@@ -1,62 +1,26 @@
 import bcrypt from 'bcryptjs';
 import { faker } from '@faker-js/faker';
-
-// Import des modèles
 import User from './backend/models/userModel.js';
 import Entreprise from './backend/models/entrepriseModel.js';
-
-// Fonction pour générer des utilisateurs fictifs
-async function generateFakeUsers(count) {
-    try {
-        const users = [];
-        const salt = await bcrypt.genSalt(10); // Générer un sel pour le hachage de mot de passe
-
-        for (let i = 0; i < count; i++) {
-            const name = faker.person.fullName();
-            const email = faker.internet.email();
-            const phone = faker.phone.number(); // Utilisation correcte
-            const address = faker.location.streetAddress(); // Utilisation de faker.location.streetAddress
-            const role = faker.helpers.arrayElement(['Admin', 'Recruteur', 'Employe', 'Formateur', 'DirecteurRH']); // Utilisation de faker.helpers.arrayElement
-            const password = await bcrypt.hash(faker.internet.password(), salt);
-
-            const user = new User({
-                name,
-                email,
-                phone,
-                address,
-                role,
-                password
-            });
-
-            await user.save();
-            users.push(user);
-        }
-
-        console.log(`${count} utilisateurs fictifs ont été générés.`);
-        return users;
-    } catch (error) {
-        console.error('Erreur lors de la génération des utilisateurs fictifs :', error.message);
-        throw error;
-    }
-}
+import { sequelize } from './backend/config/db.js';
 
 // Fonction pour générer des entreprises fictives
-async function generateFakeEntreprises(count) {
+async function generateFakeEntreprises(count = 25) { // Set default count to 25
     try {
         const entreprises = [];
 
         for (let i = 0; i < count; i++) {
-            const name = faker.company.companyName(); // Utilisation correcte
-            const address = faker.location.streetAddress(); // Utilisation de faker.location.streetAddress
-            const secteurActivite = faker.company.catchPhrase();
-            const contact = faker.person.fullName(); // Utilisation correcte
+            const name = faker.company.name();
+            const address = faker.location.streetAddress();
+            const secteurActivite = faker.company.bs();
+            const contact = faker.person.fullName();
             const email = faker.internet.email();
-            const phone = faker.phone.number(); // Correction : utiliser phone.number
+            const phone = faker.phone.number();
             const website = faker.internet.url();
             const logo = faker.image.imageUrl();
             const description = faker.lorem.sentences();
 
-            const entreprise = new Entreprise({
+            const entreprise = await Entreprise.create({
                 name,
                 address,
                 secteurActivite,
@@ -68,7 +32,6 @@ async function generateFakeEntreprises(count) {
                 description
             });
 
-            await entreprise.save();
             entreprises.push(entreprise);
         }
 
@@ -80,11 +43,53 @@ async function generateFakeEntreprises(count) {
     }
 }
 
-// Exemple d'utilisation pour générer 5 utilisateurs et 3 entreprises fictifs
+// Fonction pour générer des utilisateurs fictifs
+async function generateFakeUsers(count = 25) { // Set default count to 25
+    try {
+        const users = [];
+        const salt = await bcrypt.genSalt(10); // Générer un sel pour le hachage de mot de passe
+
+        const allEnterprises = await Entreprise.findAll(); // Récupérer toutes les entreprises
+
+        for (let i = 0; i < count; i++) {
+            const name = faker.person.fullName();
+            const email = faker.internet.email();
+            const phone = faker.phone.number();
+            const address = faker.location.streetAddress();
+            const role = faker.helpers.arrayElement(['Admin', 'Recruteur', 'Employe', 'Formateur', 'DirecteurRH']);
+            const password = await bcrypt.hash(faker.internet.password(), salt);
+
+            // Sélectionner une entreprise aléatoire
+            const randomEnterpriseIndex = Math.floor(Math.random() * allEnterprises.length);
+            const randomEnterprise = allEnterprises[randomEnterpriseIndex];
+
+            const user = await User.create({
+                name,
+                email,
+                phone,
+                address,
+                role,
+                password,
+                entrepriseId: randomEnterprise.id // Attribuer l'ID de l'entreprise aléatoire
+            });
+
+            users.push(user);
+        }
+
+        console.log(`${count} utilisateurs fictifs ont été générés.`);
+        return users;
+    } catch (error) {
+        console.error('Erreur lors de la génération des utilisateurs fictifs :', error.message);
+        throw error;
+    }
+}
+
+// Exemple d'utilisation pour générer 25 utilisateurs et 25 entreprises fictifs
 (async () => {
     try {
-        await generateFakeUsers(5);
-        await generateFakeEntreprises(3);
+        await sequelize.sync(); // Synchroniser les modèles avec la base de données
+        await generateFakeEntreprises(25);
+        await generateFakeUsers(25);
     } catch (error) {
         console.error('Erreur lors de la génération des données fictives :', error.message);
     }

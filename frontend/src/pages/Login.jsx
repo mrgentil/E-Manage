@@ -6,7 +6,6 @@ import { useLoginMutation } from '../redux/api/usersApiSlice.js';
 import { setCredentials } from '../features/authSlice.js';
 import { toast } from 'react-toastify';
 
-
 const Login = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -14,15 +13,19 @@ const Login = () => {
     const dispatch = useDispatch();
     const navigate = useNavigate();
 
+    // Utilisation de la mutation de login
     const [login, { isLoading }] = useLoginMutation();
 
+    // Récupérer les informations de l'utilisateur depuis le store Redux
     const { userInfo } = useSelector((state) => state.auth);
 
+    // Récupérer le paramètre de redirection de l'URL
     const { search } = useLocation();
     const sp = new URLSearchParams(search);
     const redirect = sp.get('redirect') || '/home';
 
     useEffect(() => {
+        // Rediriger l'utilisateur s'il est déjà connecté
         if (userInfo) {
             navigate(redirect);
         }
@@ -31,7 +34,9 @@ const Login = () => {
     const submitHandler = async (e) => {
         e.preventDefault();
         try {
+            // Effectuer la mutation de login
             const res = await login({ email, password }).unwrap();
+            // Mettre à jour les informations de l'utilisateur dans le store Redux
             dispatch(setCredentials({ ...res }));
             navigate(redirect);
         } catch (err) {
@@ -84,6 +89,11 @@ const Login = () => {
                                     {isLoading && <Loader />}
                                 </div>
                                 <hr />
+                                <div className="text-center">
+                                    <Link to="/register" className="text-decoration-none">
+                                        Vous n'avez pas de compte? Inscrivez-vous ici
+                                    </Link>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -94,4 +104,3 @@ const Login = () => {
 };
 
 export default Login;
-

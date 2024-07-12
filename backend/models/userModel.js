@@ -1,34 +1,64 @@
-import mongoose, {Schema} from 'mongoose';
+import { DataTypes, Model } from 'sequelize';
 import bcrypt from 'bcryptjs';
+import { sequelize } from '../config/db.js';
+import Entreprise from './entrepriseModel.js';
 
-const userSchema = new mongoose.Schema({
-    name: String,
-    email: String,
-    phone: String,
-    address: String,
-    role: { type: String, enum: ['Admin', 'Recruteur', 'Employe', 'Formateur', 'DirecteurRH'] },
-    entreprise: { type: Schema.Types.ObjectId, ref: 'Entreprise' },
-    password: { type: String, required: true },
-}, {
-    timestamps: true,
-});
-
-// Middleware pour hacher le mot de passe avant de sauvegarder
-userSchema.pre('save', async function (next) {
-    if (!this.isModified('password')) {
-        return next();
+class User extends Model {
+    async comparePassword(enteredPassword) {
+        const isMatch = await bcrypt.compare(enteredPassword, this.password);
+        return isMatch;
     }
+}
 
-    const salt = await bcrypt.genSalt(10);
-    this.password = await bcrypt.hash(this.password, salt);
-    next();
+User.init({
+    name: {
+        type: DataTypes.STRING,
+        allowNull: false,
+    },
+    email: {
+        type: DataTypes.STRING,
+        allowNull: false,
+        unique: true,
+        validate: {
+            isEmail: true,
+        },
+    },
+    phone: {
+        type: DataTypes.STRING,
+        allowNull: true,
+    },
+    address: {
+        type: DataTypes.STRING,
+        allowNull: true,
+    },
+    role: {
+        type: DataTypes.ENUM('Admin', 'Recruteur', 'Employe', 'Formateur', 'DirecteurRH'),
+        allowNull: false,
+    },
+    entrepriseId: {
+        type: DataTypes.INTEGER,
+        references: {
+            model: Entreprise,
+            key: 'id',
+        },
+    },
+    password: {
+        type: DataTypes.STRING,
+        allowNull: false,
+    },
+}, {
+    sequelize,
+    modelName: 'User',
+    timestamps: true,
+    hooks: {
+        beforeSave: async (user) => {
+            if (user.changed('password')) {
+                user.password = await bcrypt.hash(user.password, 10);
+            }
+        },
+    },
 });
 
-// Méthode pour comparer les mots de passe
-userSchema.methods.comparePassword = async function (enteredPassword) {
-    return await bcrypt.compare(enteredPassword, this.password);
-};
-
-const User = mongoose.model('User', userSchema);
+User.belongsTo(Entreprise, { foreignKey: 'entrepriseId' });
 
 export default User;

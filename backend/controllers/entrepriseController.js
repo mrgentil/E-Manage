@@ -1,9 +1,9 @@
-import Entreprise from '../models/entrepriseModel.js';
+import Entreprise from '../models/entrepriseModel.js'
 
 // Créer une entreprise
 export const createEntreprise = async (req, res) => {
     try {
-        const { name, address, secteurActivite, contact, email, phone, website, description } = req.body;
+        const { name, address, secteurActivite, email, phone, website,  } = req.body;
         const logo = req.file ? req.file.path : '';
 
         // Vérifiez si le champ 'name' est fourni
@@ -11,18 +11,16 @@ export const createEntreprise = async (req, res) => {
             return res.status(400).json({ error: "Le champ 'name' est requis." });
         }
 
-        const entreprise = new Entreprise({
+        const entreprise = await Entreprise.create({
             name,
             address,
             secteurActivite,
-            contact,
             email,
             phone,
             website,
             logo,
-            description
+
         });
-        await entreprise.save();
 
         res.status(201).json(entreprise);
     } catch (err) {
@@ -33,7 +31,7 @@ export const createEntreprise = async (req, res) => {
 // Obtenir toutes les entreprises
 export const getEntreprises = async (req, res) => {
     try {
-        const entreprises = await Entreprise.find();
+        const entreprises = await Entreprise.findAll();
         res.status(200).json(entreprises);
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -43,7 +41,7 @@ export const getEntreprises = async (req, res) => {
 // Obtenir une entreprise par ID
 export const getEntrepriseById = async (req, res) => {
     try {
-        const entreprise = await Entreprise.findById(req.params.id);
+        const entreprise = await Entreprise.findByPk(req.params.id);
         if (!entreprise) {
             return res.status(404).json({ message: 'Entreprise non trouvée' });
         }
@@ -56,10 +54,10 @@ export const getEntrepriseById = async (req, res) => {
 // Mettre à jour une entreprise
 export const updateEntreprise = async (req, res) => {
     try {
-        const { name, address, secteurActivite, contact, email, phone, website, description } = req.body;
+        const { name, address, secteurActivite, email, phone, website, } = req.body;
         const logo = req.file ? req.file.path : '';
 
-        const entreprise = await Entreprise.findById(req.params.id);
+        const entreprise = await Entreprise.findByPk(req.params.id);
 
         if (!entreprise) {
             return res.status(404).json({ message: 'Entreprise non trouvée' });
@@ -68,12 +66,11 @@ export const updateEntreprise = async (req, res) => {
         entreprise.name = name || entreprise.name;
         entreprise.address = address || entreprise.address;
         entreprise.secteurActivite = secteurActivite || entreprise.secteurActivite;
-        entreprise.contact = contact || entreprise.contact;
         entreprise.email = email || entreprise.email;
         entreprise.phone = phone || entreprise.phone;
         entreprise.website = website || entreprise.website;
         entreprise.logo = logo || entreprise.logo;
-        entreprise.description = description || entreprise.description;
+
 
         const updatedEntreprise = await entreprise.save();
         res.status(200).json(updatedEntreprise);
@@ -85,15 +82,17 @@ export const updateEntreprise = async (req, res) => {
 // Supprimer une entreprise
 export const deleteEntreprise = async (req, res) => {
     try {
-        const entreprise = await Entreprise.findById(req.params.id);
+        const entreprise = await Entreprise.findByPk(req.params.id);
 
         if (!entreprise) {
             return res.status(404).json({ message: 'Entreprise non trouvée' });
         }
 
-        await entreprise.remove();
+        await entreprise.destroy();
         res.status(200).json({ message: 'Entreprise supprimée avec succès' });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
 };
+
+

@@ -1,5 +1,11 @@
 import express from 'express';
-import { createEntreprise, getEntreprises, getEntrepriseById, updateEntreprise, deleteEntreprise } from '../controllers/entrepriseController.js';
+import {
+    createEntreprise,
+    getEntreprises,
+    getEntrepriseById,
+    updateEntreprise,
+    deleteEntreprise,
+} from '../controllers/entrepriseController.js';
 import upload from '../middlewares/uploadMiddleware.js';
 
 const router = express.Router();

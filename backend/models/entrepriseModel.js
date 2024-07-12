@@ -1,19 +1,48 @@
-import mongoose, {Schema} from 'mongoose';
+import { DataTypes, Model } from 'sequelize';
+import { sequelize } from '../config/db.js';
 
-const entrepriseSchema = new mongoose.Schema({
-    name: { type: String, required: true, unique: true },
-    address: String,
-    secteurActivite: String,
-    contact: String,
-    email: String,
-    phone: String,
-    website: String,
-    logo: String,
-    description: String,
+class Entreprise extends Model {}
+
+Entreprise.init({
+    name: {
+        type: DataTypes.STRING,
+        allowNull: false,
+        unique: true,
+    },
+    address: {
+        type: DataTypes.STRING,
+        allowNull: true,
+    },
+    secteurActivite: {
+        type: DataTypes.STRING,
+        allowNull: true,
+    },
+    email: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        validate: {
+            isEmail: true,
+        },
+    },
+    phone: {
+        type: DataTypes.STRING,
+        allowNull: true,
+    },
+    website: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        validate: {
+            isUrl: true,
+        },
+    },
+    logo: {
+        type: DataTypes.STRING,
+        allowNull: true,
+    },
 }, {
+    sequelize,
+    modelName: 'Entreprise',
     timestamps: true,
 });
-
-const Entreprise = mongoose.model('Entreprise', entrepriseSchema);
 
 export default Entreprise;
