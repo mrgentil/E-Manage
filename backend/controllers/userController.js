@@ -2,6 +2,7 @@ import User from '../models/userModel.js';
 import Entreprise from '../models/entrepriseModel.js';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import {sendEmail} from "../../emailService.js";
 
 // Enregistrement d'un utilisateur
 export const registerUser = async (req, res) => {
@@ -34,6 +35,17 @@ export const registerUser = async (req, res) => {
 
         const token = jwt.sign({ userId: user.id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '1h' });
 
+        const emailHtml = `
+            <div style="font-family: Arial, sans-serif; line-height: 1.6;">
+                <p>Bonjour ${name},</p>
+                <p>Votre compte a été créé avec succès. Cliquez sur le lien suivant pour réinitialiser votre mot de passe :</p>
+                <a href="http://localhost:5173/reset-password?token=${token}" style="color: blue; text-decoration: underline;">Réinitialiser le mot de passe</a>
+                <p>Merci.</p>
+            </div>
+        `;
+
+        await sendEmail(email, 'Bienvenue !', emailHtml);
+
         res.status(201).json({ token, user });
     } catch (err) {
         console.error(err);
@@ -42,27 +54,84 @@ export const registerUser = async (req, res) => {
 };
 
 
-// Connexion d'un utilisateur
-export const loginUser = async (req, res) => {
+// Route pour réinitialiser le mot de passe
+export const resetPassword = async (req, res) => {
+    const { email } = req.body;
     try {
-        const { email, password } = req.body;
-
         const user = await User.findOne({ where: { email } });
         if (!user) {
             return res.status(404).json({ message: 'Utilisateur non trouvé' });
         }
 
-        const isMatch = await user.comparePassword(password);
-        if (!isMatch) {
-            return res.status(400).json({ message: 'Mot de passe incorrect' });
+        const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+
+        const emailHtml = `
+            <div style="font-family: Arial, sans-serif; line-height: 1.6;">
+                <p>Bonjour ${user.name},</p>
+                <p>Cliquez sur le lien suivant pour réinitialiser votre mot de passe :</p>
+                <a href="http://localhost:5173/reset-password?token=${token}" style="color: blue; text-decoration: underline;">Réinitialiser le mot de passe</a>
+                <p>Merci.</p>
+            </div>
+        `;
+
+        await sendEmail(email, 'Réinitialisation du mot de passe', emailHtml);
+
+        res.status(200).json({ message: 'Email de réinitialisation envoyé' });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Erreur lors de la réinitialisation du mot de passe' });
+    }
+};
+
+// Mise à jour du mot de passe
+export const updatePassword = async (req, res) => {
+    const { token, newPassword } = req.body;
+    try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const user = await User.findByPk(decoded.userId);
+        if (!user) {
+            console.log('Utilisateur non trouvé');
+            return res.status(404).json({ message: 'Utilisateur non trouvé' });
         }
 
-        const token = jwt.sign({ userId: user.id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '1h' });
+        console.log('Mise à jour du mot de passe pour l\'utilisateur:', user.email);
+        user.password = newPassword; // Assigner le nouveau mot de passe directement
+        await user.save();
+
+        console.log('Mot de passe mis à jour avec succès pour l\'utilisateur:', user.email);
+
+        // Générer un nouveau token JWT
+        const newToken = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+
+        res.json({ user: { id: user.id, name: user.name, email: user.email }, token: newToken });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Erreur lors de la mise à jour du mot de passe' });
+    }
+};
+
+// Connexion d'un utilisateur
+export const loginUser = async (req, res) => {
+    const { email, password } = req.body;
+    try {
+        const user = await User.findOne({ where: { email } });
+        if (!user) {
+            return res.status(401).json({ message: 'Utilisateur non trouvé' });
+        }
+
+        const isMatch = await user.comparePassword(password);
+        console.log('Comparaison des mots de passe:', password, user.password, 'Résultat:', isMatch);
+        if (!isMatch) {
+            return res.status(401).json({ message: 'Mot de passe incorrect' });
+        }
+
+        // Générer un token JWT
+        const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, { expiresIn: '1h' });
 
         res.status(200).json({ token, user });
     } catch (err) {
         console.error(err);
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ message: 'Erreur lors de la connexion' });
     }
 };
 

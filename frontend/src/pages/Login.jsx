@@ -89,11 +89,6 @@ const Login = () => {
                                     {isLoading && <Loader />}
                                 </div>
                                 <hr />
-                                <div className="text-center">
-                                    <Link to="/register" className="text-decoration-none">
-                                        Vous n'avez pas de compte? Inscrivez-vous ici
-                                    </Link>
-                                </div>
                             </div>
                         </div>
                     </div>

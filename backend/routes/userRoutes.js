@@ -6,7 +6,9 @@ import {
     getAllUsers,
     deleteUser,
     logoutUser,
-    updateUser
+    updateUser,
+    resetPassword,
+    updatePassword
 } from '../controllers/userController.js';
 import { protect, admin } from '../middlewares/authMiddleware.js';
 
@@ -15,7 +17,7 @@ const router = express.Router();
 // Routes publiques
 router.post('/register', registerUser);
 router.post('/login', loginUser);
-router.post('/logout', logoutUser); // Optionnel
+router.post('/logout', logoutUser);
 
 // Routes protégées
 router.get('/profile', protect, getUserProfile);
@@ -24,5 +26,9 @@ router.put('/profile', protect, updateUser);
 // Routes admin
 router.get('/', protect, admin, getAllUsers);
 router.delete('/:id', protect, admin, deleteUser);
+
+// Routes de réinitialisation de mot de passe
+router.post('/reset-password', resetPassword);
+router.post('/update-password', updatePassword);
 
 export default router;

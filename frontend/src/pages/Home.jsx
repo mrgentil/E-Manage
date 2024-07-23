@@ -6,7 +6,7 @@ const Home = () => {
     const { userInfo } = useSelector((state) => state.auth);
 
     // Vérifie si userInfo.role est un tableau ou non
-    const roles = Array.isArray(userInfo?.roles) ? userInfo.roles.map(role => role.name).join(', ') : '';
+    const roles = Array.isArray(userInfo?.roles) ? userInfo.roles.map(role => role.name).join(', ') : userInfo?.role;
 
     return (
         <div className="page-wrapper">

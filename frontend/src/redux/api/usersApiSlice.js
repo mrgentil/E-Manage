@@ -67,6 +67,13 @@ export const userApiSlice = apiSlice.injectEndpoints({
                 url: `${BASE_URL}/api/entreprises`,
             }),
         }),
+        updatePassword: builder.mutation({
+            query: (data) => ({
+                url: `${USERS_URL}/update-password`,
+                method: 'POST',
+                body: data,
+            }),
+        }),
     }),
 });
 
@@ -81,4 +88,5 @@ export const {
     useGetUserDetailsQuery,
     useGetRolesQuery,
     useGetEntreprisesQuery,
+    useUpdatePasswordMutation,
 } = userApiSlice;

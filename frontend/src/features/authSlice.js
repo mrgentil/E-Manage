@@ -1,29 +1,46 @@
-import { createSlice } from "@reduxjs/toolkit";
-
-const initialState = {
-    userInfo: localStorage.getItem("userInfo")
-        ? JSON.parse(localStorage.getItem("userInfo"))
-        : null,
-};
+import { createSlice } from '@reduxjs/toolkit';
+import { updatePassword } from '../redux/api/authActions';
 
 const authSlice = createSlice({
-    name: "auth",
-    initialState,
+    name: 'auth',
+    initialState: {
+        user: null,
+        token: null,
+        isAuthenticated: false,
+        error: null,
+    },
     reducers: {
+        loginSuccess: (state, action) => {
+            state.user = action.payload.user;
+            state.token = action.payload.token;
+            state.isAuthenticated = true;
+            state.error = null;
+        },
         setCredentials: (state, action) => {
-            state.userInfo = action.payload;
-            localStorage.setItem("userInfo", JSON.stringify(action.payload));
-
-            const expirationTime = new Date().getTime() + 30 * 24 * 60 * 60 * 1000; // 30 days
-            localStorage.setItem("expirationTime", expirationTime);
+            state.user = action.payload.user;
+            state.token = action.payload.token;
+            state.isAuthenticated = true;
         },
         logout: (state) => {
-            state.userInfo = null;
-            localStorage.clear();
+            state.user = null;
+            state.token = null;
+            state.isAuthenticated = false;
+            state.error = null;
         },
+    },
+    extraReducers: (builder) => {
+        builder.addCase(updatePassword.fulfilled, (state, action) => {
+            state.user = action.payload.user;
+            state.token = action.payload.token;
+            state.isAuthenticated = true;
+            state.error = null;
+        });
+        builder.addCase(updatePassword.rejected, (state, action) => {
+            state.error = action.payload;
+        });
     },
 });
 
-export const { setCredentials, logout } = authSlice.actions;
+export const { loginSuccess, setCredentials, logout } = authSlice.actions;
 
 export default authSlice.reducer;

@@ -5,6 +5,7 @@ import Entreprise from './entrepriseModel.js';
 
 class User extends Model {
     async comparePassword(enteredPassword) {
+        console.log('Comparing passwords:', enteredPassword, this.password);
         const isMatch = await bcrypt.compare(enteredPassword, this.password);
         return isMatch;
     }
@@ -53,7 +54,9 @@ User.init({
     hooks: {
         beforeSave: async (user) => {
             if (user.changed('password')) {
+                console.log('Hashing password for user:', user.email);
                 user.password = await bcrypt.hash(user.password, 10);
+                console.log('Hashed password:', user.password);
             }
         },
     },
