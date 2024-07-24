@@ -8,111 +8,42 @@ import { toast } from "react-toastify";
 
 const AllUsers = () => {
     const [users, setUsers] = useState([]);
-    const [roles, setRoles] = useState([]);
-    const [entreprises, setEntreprises] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
     const [currentPage, setCurrentPage] = useState(1);
-    const [perPage] = useState(10); // Nombre d'utilisateurs par page
-    const [editableUserId, setEditableUserId] = useState(null);
-    const [editableUser, setEditableUser] = useState({
-        name: "",
-        email: "",
-        phone: "",
-        address: "",
-        role: "",
-        entreprise: ""
-    });
+    const [totalPages, setTotalPages] = useState(1);
+
+    const fetchUsers = async (page) => {
+        try {
+            const response = await axios.get('http://localhost:5000/api/users', { params: { page, limit: 15 } });
+            console.log('Fetched users:', response.data.rows); // Log des données récupérées
+            setUsers(response.data.rows); // rows contiendra les utilisateurs
+            setTotalPages(Math.ceil(response.data.count / 15)); // total des pages
+            setLoading(false);
+        } catch (err) {
+            setError(err.message);
+            setLoading(false);
+        }
+    };
 
     useEffect(() => {
-        fetchUsers();
-        fetchRoles();
-        fetchEntreprises();
-    }, [currentPage, perPage]);
-
-    const fetchUsers = async () => {
-        setLoading(true);
-        try {
-            const response = await axios.get(`http://localhost:5000/api/users?page=${currentPage}&limit=${perPage}`);
-            setUsers(response.data);
-            setLoading(false);
-        } catch (error) {
-            console.error('Error fetching users:', error);
-            toast.error('Erreur lors de la récupération des utilisateurs.');
-        }
-    };
-
-    const fetchRoles = async () => {
-        try {
-            const response = await axios.get('http://localhost:5000/api/roles');
-            setRoles(response.data);
-        } catch (error) {
-            console.error('Error fetching roles:', error);
-            toast.error('Erreur lors de la récupération des rôles.');
-        }
-    };
-
-    const fetchEntreprises = async () => {
-        try {
-            const response = await axios.get('http://localhost:5000/api/entreprises');
-            setEntreprises(response.data);
-        } catch (error) {
-            console.error('Error fetching entreprises:', error);
-            toast.error('Erreur lors de la récupération des entreprises.');
-        }
-    };
+        fetchUsers(currentPage);
+    }, [currentPage]);
 
     const handleNextPage = () => {
-        setCurrentPage(currentPage + 1);
+        if (currentPage < totalPages) {
+            setCurrentPage(prevPage => prevPage + 1);
+        }
     };
 
     const handlePrevPage = () => {
-        setCurrentPage(currentPage - 1);
-    };
-
-    const toggleEdit = (user) => {
-        if (editableUserId === user._id) {
-            setEditableUserId(null);
-        } else {
-            setEditableUserId(user._id);
-            setEditableUser({
-                name: user.name,
-                email: user.email,
-                phone: user.phone,
-                address: user.address,
-                role: user.role._id,
-                entreprise: user.entreprise._id
-            });
+        if (currentPage > 1) {
+            setCurrentPage(prevPage => prevPage - 1);
         }
     };
 
-    const handleUpdateUser = async (id) => {
-        try {
-            await axios.put(`http://localhost:5000/api/users/${id}`, editableUser);
-            setEditableUserId(null);
-            fetchUsers(); // Recharge la liste des utilisateurs après la mise à jour
-            toast.success('Utilisateur mis à jour avec succès.');
-        } catch (error) {
-            console.error('Erreur lors de la mise à jour de l\'utilisateur :', error);
-            toast.error('Erreur lors de la mise à jour de l\'utilisateur.');
-        }
-    };
-
-    const handleDeleteUser = async (userId) => {
-        if (window.confirm("Êtes-vous sûr de vouloir supprimer cet utilisateur ?")) {
-            try {
-                await axios.delete(`http://localhost:5000/api/users/${userId}`);
-                fetchUsers(); // Recharge la liste des utilisateurs après la suppression
-                toast.success('Utilisateur supprimé avec succès.');
-            } catch (error) {
-                console.error('Erreur lors de la suppression de l\'utilisateur :', error);
-                toast.error('Erreur lors de la suppression de l\'utilisateur.');
-            }
-        }
-    };
-
-    if (loading) {
-        return <Loader />;
-    }
+    if (loading) return <Loader />;
+    if (error) return <p>Erreur: {error}</p>;
 
     return (
         <div className="page-wrapper">
@@ -150,100 +81,17 @@ const AllUsers = () => {
                                         </thead>
                                         <tbody>
                                         {users.map(user => (
-                                            <tr key={user._id}>
+                                            <tr key={user.id}>
+                                                <td>{user.name}</td>
+                                                <td>{user.email}</td>
+                                                <td>{user.phone}</td>
+                                                <td>{user.address}</td>
+                                                <td>{user.role}</td>
+                                                <td>{user.Entreprise ? user.Entreprise.name : 'N/A'}</td>
                                                 <td>
-                                                    {editableUserId === user._id ? (
-                                                        <input
-                                                            type="text"
-                                                            value={editableUser.name}
-                                                            onChange={(e) => setEditableUser({ ...editableUser, name: e.target.value })}
-                                                            className="form-control"
-                                                        />
-                                                    ) : (
-                                                        user.name
-                                                    )}
-                                                </td>
-                                                <td>
-                                                    {editableUserId === user._id ? (
-                                                        <input
-                                                            type="text"
-                                                            value={editableUser.email}
-                                                            onChange={(e) => setEditableUser({ ...editableUser, email: e.target.value })}
-                                                            className="form-control"
-                                                        />
-                                                    ) : (
-                                                        user.email
-                                                    )}
-                                                </td>
-                                                <td>
-                                                    {editableUserId === user._id ? (
-                                                        <input
-                                                            type="text"
-                                                            value={editableUser.phone}
-                                                            onChange={(e) => setEditableUser({ ...editableUser, phone: e.target.value })}
-                                                            className="form-control"
-                                                        />
-                                                    ) : (
-                                                        user.phone
-                                                    )}
-                                                </td>
-                                                <td>
-                                                    {editableUserId === user._id ? (
-                                                        <input
-                                                            type="text"
-                                                            value={editableUser.address}
-                                                            onChange={(e) => setEditableUser({ ...editableUser, address: e.target.value })}
-                                                            className="form-control"
-                                                        />
-                                                    ) : (
-                                                        user.address
-                                                    )}
-                                                </td>
-                                                <td>
-                                                    {editableUserId === user._id ? (
-                                                        <select
-                                                            value={editableUser.role}
-                                                            onChange={(e) => setEditableUser({ ...editableUser, role: e.target.value })}
-                                                            className="form-control"
-                                                        >
-                                                            {roles.map(role => (
-                                                                <option key={role._id} value={role._id}>{role.name}</option>
-                                                            ))}
-                                                        </select>
-                                                    ) : (
-                                                        user.role.name
-                                                    )}
-                                                </td>
-                                                <td>
-                                                    {editableUserId === user._id ? (
-                                                        <select
-                                                            value={editableUser.entreprise}
-                                                            onChange={(e) => setEditableUser({ ...editableUser, entreprise: e.target.value })}
-                                                            className="form-control"
-                                                        >
-                                                            {entreprises.map(entreprise => (
-                                                                <option key={entreprise._id} value={entreprise._id}>{entreprise.name}</option>
-                                                            ))}
-                                                        </select>
-                                                    ) : (
-                                                        user.entreprise.name
-                                                    )}
-                                                </td>
-                                                <td>
-                                                    <div className="td-actions">
-                                                        {editableUserId === user._id ? (
-                                                            <button className="btn btn-success" onClick={() => handleUpdateUser(user._id)}>
-                                                                <FaCheck />
-                                                            </button>
-                                                        ) : (
-                                                            <button className="btn btn-primary" onClick={() => toggleEdit(user)}>
-                                                                <FaEdit />
-                                                            </button>
-                                                        )}
-                                                        <button className="btn btn-danger" onClick={() => handleDeleteUser(user._id)}>
-                                                            <FaTrash />
-                                                        </button>
-                                                    </div>
+                                                    <FaEdit />
+                                                    <FaTrash />
+                                                    <FaCheck />
                                                 </td>
                                             </tr>
                                         ))}
@@ -255,7 +103,7 @@ const AllUsers = () => {
                     </div>
                     <div className="pagination-buttons">
                         <button onClick={handlePrevPage} disabled={currentPage === 1}>Précédent</button>
-                        <button onClick={handleNextPage}>Suivant</button>
+                        <button onClick={handleNextPage} disabled={currentPage === totalPages}>Suivant</button>
                     </div>
                 </div>
             </div>

@@ -24,7 +24,7 @@ router.get('/profile', protect, getUserProfile);
 router.put('/profile', protect, updateUser);
 
 // Routes admin
-router.get('/', protect, admin, getAllUsers);
+router.get('/',  getAllUsers);
 router.delete('/:id', protect, admin, deleteUser);
 
 // Routes de réinitialisation de mot de passe

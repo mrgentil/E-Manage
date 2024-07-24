@@ -1,3 +1,4 @@
+// authSlice.js
 import { createSlice } from '@reduxjs/toolkit';
 import { updatePassword } from '../redux/api/authActions';
 

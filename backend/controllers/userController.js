@@ -142,14 +142,28 @@ export const logoutUser = (req, res) => {
 
 // Récupérer tous les utilisateurs
 export const getAllUsers = async (req, res) => {
+    const { page = 1, limit = 15 } = req.query;
     try {
-        const users = await User.findAll();
-        res.status(200).json(users);
+        const users = await User.findAndCountAll({
+            include: [
+                {
+                    model: Entreprise,
+                    attributes: ['name'],
+                },
+            ],
+            offset: (page - 1) * limit,
+            limit: parseInt(limit),
+        });
+        res.status(200).json({
+            rows: users.rows,
+            count: users.count,
+        });
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: err.message });
     }
 };
+
 
 // Mettre à jour un utilisateur
 export const updateUser = async (req, res) => {

@@ -1,22 +1,18 @@
+// Home.jsx
 import { Link } from "react-router-dom";
 import { useSelector } from 'react-redux';
 import Header from "../components/Header.jsx";
 
 const Home = () => {
-    const { userInfo } = useSelector((state) => state.auth);
+    const userInfo = useSelector((state) => state.auth.user);
 
-    // Vérifie si userInfo.role est un tableau ou non
-    const roles = Array.isArray(userInfo?.roles) ? userInfo.roles.map(role => role.name).join(', ') : userInfo?.role;
+    console.log('User Info:', userInfo);
 
     return (
         <div className="page-wrapper">
             <div className="page-content">
                 <div className="main-container">
-                    <Link
-                        to="/home"
-                        className="theme-switch"
-                        target="_blank"
-                    ></Link>
+                    <Link to="/home" className="theme-switch" target="_blank"></Link>
                     <Header />
                     <div className="page-header">
                         <ol className="breadcrumb">
@@ -31,12 +27,8 @@ const Home = () => {
                     <div className="user-info">
                         <h3>Welcome, {userInfo?.name}!</h3>
                         <p>Email: {userInfo?.email}</p>
-                        <p>
-                            Roles: {roles}
-                        </p>
-                        <p>
-                            Entreprise: {userInfo?.entreprise?.name}
-                        </p>
+                        <p>Roles: {userInfo?.role}</p>
+                        <p>Entreprise ID: {userInfo?.entrepriseId}</p>
                     </div>
                 </div>
             </div>

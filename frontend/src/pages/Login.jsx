@@ -1,3 +1,4 @@
+// Login.jsx
 import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
@@ -12,20 +13,14 @@ const Login = () => {
 
     const dispatch = useDispatch();
     const navigate = useNavigate();
-
-    // Utilisation de la mutation de login
     const [login, { isLoading }] = useLoginMutation();
-
-    // Récupérer les informations de l'utilisateur depuis le store Redux
     const { userInfo } = useSelector((state) => state.auth);
 
-    // Récupérer le paramètre de redirection de l'URL
     const { search } = useLocation();
     const sp = new URLSearchParams(search);
     const redirect = sp.get('redirect') || '/home';
 
     useEffect(() => {
-        // Rediriger l'utilisateur s'il est déjà connecté
         if (userInfo) {
             navigate(redirect);
         }
@@ -34,13 +29,11 @@ const Login = () => {
     const submitHandler = async (e) => {
         e.preventDefault();
         try {
-            // Effectuer la mutation de login
             const res = await login({ email, password }).unwrap();
-            // Mettre à jour les informations de l'utilisateur dans le store Redux
-            dispatch(setCredentials({ ...res }));
+            dispatch(setCredentials({ user: res.user, token: res.token }));
             navigate(redirect);
         } catch (err) {
-            console.error("Login error:", err); // Log de l'erreur
+            console.error("Login error:", err);
             toast.error(err?.data?.message || err.error);
         }
     };
@@ -77,7 +70,6 @@ const Login = () => {
                                         placeholder="Mot de passe"
                                     />
                                 </div>
-
                                 <div className="actions mb-4">
                                     <button
                                         disabled={isLoading}
