@@ -21,7 +21,7 @@ router.post('/logout', logoutUser);
 
 // Routes protégées
 router.get('/profile', protect, getUserProfile);
-router.put('/profile', protect, updateUser);
+router.put('/:id', updateUser);
 
 // Routes admin
 router.get('/',  getAllUsers);

@@ -169,29 +169,42 @@ export const getAllUsers = async (req, res) => {
 export const updateUser = async (req, res) => {
     try {
         const { id } = req.params;
-        const { name, email, phone, address, role, entrepriseId, password } = req.body;
+        const { name, email, phone, address, role, entreprise, password } = req.body;
 
+        // Trouver l'utilisateur par ID
         const user = await User.findByPk(id);
         if (!user) {
             return res.status(404).json({ message: 'Utilisateur non trouvé' });
         }
 
-        if (password) {
-            user.password = password; // Le mot de passe sera haché par le hook beforeSave
+        // Si un nom d'entreprise est fourni, obtenir l'ID correspondant
+        if (entreprise) {
+            const entrepriseRecord = await Entreprise.findOne({ where: { name: entreprise } });
+            if (entrepriseRecord) {
+                user.entrepriseId = entrepriseRecord.id;
+            } else {
+                return res.status(400).json({ message: 'Entreprise non trouvée' });
+            }
         }
 
-        user.name = name || user.name;
-        user.email = email || user.email;
-        user.phone = phone || user.phone;
-        user.address = address || user.address;
-        user.role = role || user.role;
-        user.entrepriseId = entrepriseId || user.entrepriseId;
+        // Mise à jour des autres champs
+        user.name = name !== undefined ? name : user.name;
+        user.email = email !== undefined ? email : user.email;
+        user.phone = phone !== undefined ? phone : user.phone;
+        user.address = address !== undefined ? address : user.address;
+        user.role = role !== undefined ? role : user.role;
 
+        // Mise à jour du mot de passe si fourni
+        if (password) {
+            user.password = await bcrypt.hash(password, 10); // Hachage du mot de passe
+        }
+
+        // Sauvegarde des modifications
         await user.save();
 
         res.status(200).json(user);
     } catch (err) {
-        console.error(err);
+        console.error('Erreur:', err);
         res.status(500).json({ error: err.message });
     }
 };
