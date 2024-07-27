@@ -6,6 +6,7 @@ import { connectDB, sequelize } from './config/db.js';
 import * as dotenv from 'dotenv';
 import cookieParser from 'cookie-parser';
 import path from 'path';
+import roleRoutes from "./routes/roleRoutes.js";
 
 dotenv.config();
 
@@ -32,6 +33,7 @@ app.use((req, res, next) => {
 
 app.use('/api/users', userRoutes);
 app.use('/api/entreprises', entrepriseRoutes);
+app.use('/api/roles', roleRoutes);
 
 app.use((err, req, res, next) => {
     const statusCode = res.statusCode === 200 ? 500 : res.statusCode;

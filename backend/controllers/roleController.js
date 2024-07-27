@@ -1,93 +1,78 @@
 import Role from '../models/roleModel.js';
 
-// Créer un rôle
+// Créer un role
 export const createRole = async (req, res) => {
-    const { name } = req.body;
-
     try {
-        const roleExists = await Role.findOne({ name });
+        const { name} = req.body;
 
-        if (roleExists) {
-            return res.status(400).json({ message: 'Role already exists' });
+        // Vérifiez si le champ 'name' est fourni
+        if (!name) {
+            return res.status(400).json({ error: "Le champ 'name' est requis." });
         }
 
-        const role = await Role.create({ name });
+        const role = await Role.create({
+            name,
+        });
 
         res.status(201).json(role);
-    } catch (error) {
-        res.status(500).json({ message: 'Server error', error });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
     }
 };
 
-// Récupérer tous les rôles
-export const getAllRoles = async (req, res) => {
+// Obtenir tous les roles
+export const getRoles = async (req, res) => {
     try {
-        const userRole = req.user.role; // Récupère le rôle de l'utilisateur connecté depuis la requête (par exemple, via JWT ou session)
-
-        let roles = await Role.find();
-
-        // Filtrer les rôles en fonction du rôle de l'utilisateur connecté
-        if (userRole === 'Super Administrateur') {
-            // Si l'utilisateur est Super Administrateur, retourner tous les rôles
-            roles = roles.map(role => ({ _id: role._id, name: role.name }));
-        } else if (userRole === 'Administrateur') {
-            // Si l'utilisateur est Administrateur, filtrer les rôles pour exclure Super Administrateur et Administrateur
-            roles = roles.filter(role => role.name !== 'Super Administrateur' && role.name !== 'Administrateur')
-                .map(role => ({ _id: role._id, name: role.name }));
-        }
-
+        const roles = await Role.findAll();
         res.status(200).json(roles);
-    } catch (error) {
-        res.status(500).json({ message: 'Server error', error });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
     }
 };
 
-// Récupérer un rôle par ID
+// Obtenir un role par ID
 export const getRoleById = async (req, res) => {
     try {
-        const role = await Role.findById(req.params.id);
-
+        const role = await Role.findByPk(req.params.id);
         if (!role) {
-            return res.status(404).json({ message: 'Role not found' });
+            return res.status(404).json({ message: 'Role non trouvé' });
         }
-
         res.status(200).json(role);
-    } catch (error) {
-        res.status(500).json({ message: 'Server error', error });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
     }
 };
 
-// Mettre à jour un rôle par ID
-export const updateRoleById = async (req, res) => {
+// Mettre à jour un role
+export const updateRole = async (req, res) => {
     try {
         const { name } = req.body;
-        const role = await Role.findById(req.params.id);
+        const role = await Role.findByPk(req.params.id);
 
         if (!role) {
-            return res.status(404).json({ message: 'Role not found' });
+            return res.status(404).json({ message: 'Role non trouvé' });
         }
-
         role.name = name || role.name;
-
         const updatedRole = await role.save();
         res.status(200).json(updatedRole);
-    } catch (error) {
-        res.status(500).json({ message: 'Server error', error });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
     }
 };
 
-// Supprimer un rôle par ID
-export const deleteRoleById = async (req, res) => {
+// Supprimer un role
+export const deleteRole = async (req, res) => {
     try {
-        const role = await Role.findById(req.params.id);
+        const role = await Role.findByPk(req.params.id);
 
         if (!role) {
-            return res.status(404).json({ message: 'Role not found' });
+            return res.status(404).json({ message: 'Role non trouvé' });
         }
-
-        await role.remove();
-        res.status(200).json({ message: 'Role deleted' });
-    } catch (error) {
-        res.status(500).json({ message: 'Server error', error });
+        await role.destroy();
+        res.status(200).json({ message: 'Role supprimé avec succès' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
     }
 };
+
+

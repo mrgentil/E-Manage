@@ -1,34 +1,40 @@
-// Home.jsx
-import { Link } from "react-router-dom";
+import { useEffect } from 'react';
 import { useSelector } from 'react-redux';
-import Header from "../components/Header.jsx";
+import { useNavigate } from 'react-router-dom';
 
 const Home = () => {
-    const userInfo = useSelector((state) => state.auth.user);
+    const navigate = useNavigate();
+    const { userInfo } = useSelector((state) => state.auth);
 
-    console.log('User Info:', userInfo);
+    useEffect(() => {
+        if (!userInfo) {
+            navigate('/login');
+        } else {
+            console.log('User Info from Redux:', userInfo);
+        }
+    }, [userInfo, navigate]);
 
     return (
         <div className="page-wrapper">
             <div className="page-content">
                 <div className="main-container">
-                    <Link to="/home" className="theme-switch" target="_blank"></Link>
-                    <Header />
                     <div className="page-header">
                         <ol className="breadcrumb">
                             <li className="breadcrumb-item">Admin Dashboard</li>
                         </ol>
-                        <ul className="app-actions">
-                            <li>
-                                <a href="#"> <i className="icon-export"></i> Export </a>
-                            </li>
-                        </ul>
                     </div>
                     <div className="user-info">
-                        <h3>Welcome, {userInfo?.name}!</h3>
-                        <p>Email: {userInfo?.email}</p>
-                        <p>Roles: {userInfo?.role}</p>
-                        <p>Entreprise ID: {userInfo?.entrepriseId}</p>
+                        {userInfo ? (
+                            <>
+                                <h3>Bienvenue, {userInfo?.user?.name}!</h3>
+                                <p>Email : {userInfo?.user?.email}</p>
+                                <p>Role de l'utilisateur : {userInfo?.user?.Role?.name}</p>
+                                <p>Entreprise de l'utilisateur : {userInfo?.user?.Entreprise?.name}</p>
+
+                            </>
+                        ) : (
+                            <p>Loading user information...</p>
+                        )}
                     </div>
                 </div>
             </div>

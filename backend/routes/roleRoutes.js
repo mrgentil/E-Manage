@@ -1,8 +1,28 @@
 import express from 'express';
-const router = express.Router();
-import { createRole, getAllRoles, getRoleById, updateRoleById, deleteRoleById } from '../controllers/roleController.js';
+import {
+    createRole,
+    getRoles,
+    getRoleById,
+    updateRole,
+    deleteRole,
+}
+    from '../controllers/roleController.js';
 
-router.route('/').post(createRole).get(getAllRoles);
-router.route('/:id').get(getRoleById).put(updateRoleById).delete(deleteRoleById);
+const router = express.Router();
+
+// Route pour créer une entreprise avec téléchargement de fichier
+router.post('/create', createRole);
+
+// Route pour obtenir toutes les entreprises
+router.get('/', getRoles);
+
+// Route pour obtenir une entreprise par ID
+router.get('/:id', getRoleById);
+
+// Route pour mettre à jour une entreprise
+router.put('/:id', updateRole);
+
+// Route pour supprimer une entreprise
+router.delete('/:id', deleteRole);
 
 export default router;

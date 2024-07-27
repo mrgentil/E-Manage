@@ -2,6 +2,7 @@ import { DataTypes, Model } from 'sequelize';
 import bcrypt from 'bcryptjs';
 import { sequelize } from '../config/db.js';
 import Entreprise from './entrepriseModel.js';
+import Role from "./roleModel.js";
 
 class User extends Model {
     async comparePassword(enteredPassword) {
@@ -32,14 +33,17 @@ User.init({
         type: DataTypes.STRING,
         allowNull: true,
     },
-    role: {
-        type: DataTypes.ENUM('Admin', 'Recruteur', 'Employe', 'Formateur', 'DirecteurRH'),
-        allowNull: false,
-    },
     entrepriseId: {
         type: DataTypes.INTEGER,
         references: {
             model: Entreprise,
+            key: 'id',
+        },
+    },
+    roleId: {
+        type: DataTypes.INTEGER,
+        references: {
+            model: Role,
             key: 'id',
         },
     },
@@ -63,5 +67,7 @@ User.init({
 });
 
 User.belongsTo(Entreprise, { foreignKey: 'entrepriseId' });
+User.belongsTo(Role, { foreignKey: 'roleId' });
+
 
 export default User;

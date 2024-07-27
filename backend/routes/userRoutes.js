@@ -10,7 +10,7 @@ import {
     resetPassword,
     updatePassword
 } from '../controllers/userController.js';
-import { protect, admin } from '../middlewares/authMiddleware.js';
+import {admin, protect} from '../middlewares/authMiddleware.js';
 
 const router = express.Router();
 
@@ -24,8 +24,8 @@ router.get('/profile', protect, getUserProfile);
 router.put('/:id', updateUser);
 
 // Routes admin
-router.get('/',  getAllUsers);
-router.delete('/:id', protect, admin, deleteUser);
+router.get('/', getAllUsers);
+router.delete('/:id', protect, deleteUser);
 
 // Routes de réinitialisation de mot de passe
 router.post('/reset-password', resetPassword);

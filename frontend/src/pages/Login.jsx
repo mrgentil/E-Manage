@@ -26,17 +26,24 @@ const Login = () => {
         }
     }, [navigate, redirect, userInfo]);
 
+
     const submitHandler = async (e) => {
         e.preventDefault();
         try {
             const res = await login({ email, password }).unwrap();
             dispatch(setCredentials({ user: res.user, token: res.token }));
-            navigate(redirect);
+            localStorage.setItem('userInfo', JSON.stringify(res.user));
+            localStorage.setItem('token', res.token);
+            console.log('Stored userInfo:', localStorage.getItem('userInfo'));
+            console.log('Stored token:', localStorage.getItem('token'));
+            navigate('/home');  // Assurez-vous que ceci est correct
         } catch (err) {
             console.error("Login error:", err);
             toast.error(err?.data?.message || err.error);
         }
     };
+
+
 
     return (
         <div className="container">

@@ -1,47 +1,28 @@
-// authSlice.js
-import { createSlice } from '@reduxjs/toolkit';
-import { updatePassword } from '../redux/api/authActions';
+import { createSlice } from "@reduxjs/toolkit";
+
+const initialState = {
+    userInfo: null,
+    token: null,
+};
 
 const authSlice = createSlice({
     name: 'auth',
-    initialState: {
-        user: null,
-        token: null,
-        isAuthenticated: false,
-        error: null,
-    },
+    initialState,
     reducers: {
-        loginSuccess: (state, action) => {
-            state.user = action.payload.user;
-            state.token = action.payload.token;
-            state.isAuthenticated = true;
-            state.error = null;
-        },
         setCredentials: (state, action) => {
-            state.user = action.payload.user;
+            state.userInfo = action.payload.user;
             state.token = action.payload.token;
-            state.isAuthenticated = true;
+            console.log('Set credentials:', state.userInfo, state.token);
         },
         logout: (state) => {
-            state.user = null;
-            state.token = null;
-            state.isAuthenticated = false;
-            state.error = null;
+            state.userInfo = null;
+            localStorage.clear();
+            console.log('Logged out');
         },
-    },
-    extraReducers: (builder) => {
-        builder.addCase(updatePassword.fulfilled, (state, action) => {
-            state.user = action.payload.user;
-            state.token = action.payload.token;
-            state.isAuthenticated = true;
-            state.error = null;
-        });
-        builder.addCase(updatePassword.rejected, (state, action) => {
-            state.error = action.payload;
-        });
     },
 });
 
-export const { loginSuccess, setCredentials, logout } = authSlice.actions;
+
+export const { setCredentials, logout } = authSlice.actions;
 
 export default authSlice.reducer;

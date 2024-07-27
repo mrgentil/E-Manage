@@ -2,15 +2,24 @@ import { Link, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { useLogoutMutation } from '../redux/api/usersApiSlice.js';
 import { logout } from "../features/authSlice";
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 const Navigation = () => {
-    const { userInfo } = useSelector((state) => state.auth);
     const dispatch = useDispatch();
     const navigate = useNavigate();
 
     const [activeMenu, setActiveMenu] = useState('home');
     const [logoutApiCall] = useLogoutMutation();
+
+    // Récupérer l'utilisateur connecté depuis le store Redux
+    const { userInfo } = useSelector((state) => state.auth);
+
+    // Utiliser useEffect pour déboguer les données utilisateur
+    useEffect(() => {
+        if (userInfo) {
+            console.log("Utilisateur connecté:", userInfo);
+        }
+    }, [userInfo]);
 
     const logoutHandler = async () => {
         try {
@@ -38,7 +47,8 @@ const Navigation = () => {
                     <div className="sidebar-user-details">
                         <div className="user-profile">
                             <img src="img/user2.png" className="profile-thumb" alt="User Thumb" />
-                            <h6 className="profile-name">{userInfo?.name}</h6>
+                            <h6 className="profile-name">{userInfo ? `Nom utilisateur connecté: ${userInfo?.user?.name}` : 'Nom utilisateur non connecté'}</h6>
+
                             <ul className="profile-actions">
                                 <li>
                                     <a href="javascript:void(0)">
@@ -96,6 +106,5 @@ const Navigation = () => {
         </div>
     );
 };
-
 
 export default Navigation;

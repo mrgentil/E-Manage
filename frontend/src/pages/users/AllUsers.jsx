@@ -7,10 +7,10 @@ import { FaTrash, FaEdit, FaCheck } from "react-icons/fa";
 import { toast } from "react-toastify";
 import Select from 'react-select';
 
-
 const AllUsers = () => {
     const [users, setUsers] = useState([]);
     const [entreprises, setEntreprises] = useState([]);
+    const [roles, setRoles] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [currentPage, setCurrentPage] = useState(1);
@@ -44,10 +44,24 @@ const AllUsers = () => {
         }
     };
 
+    // Fonction pour récupérer les rôles
+    const fetchRoles = async () => {
+        try {
+            const response = await axios.get('http://localhost:5000/api/roles');
+            setRoles(response.data.map(role => ({
+                value: role.id,
+                label: role.name
+            })));
+        } catch (err) {
+            setError(err.message);
+        }
+    };
+
     // Hook d'effet pour récupérer les données au chargement du composant
     useEffect(() => {
         fetchUsers(currentPage);
         fetchEntreprises();
+        fetchRoles();
     }, [currentPage]);
 
     // Fonction pour gérer le clic sur le bouton d'édition
@@ -63,8 +77,13 @@ const AllUsers = () => {
     };
 
     // Fonction pour gérer les changements dans le sélecteur d'entreprise
-    const handleSelectChange = (selectedOption) => {
+    const handleSelectEntrepriseChange = (selectedOption) => {
         setEditedUser(prevState => ({ ...prevState, entrepriseId: selectedOption.value }));
+    };
+
+    // Fonction pour gérer les changements dans le sélecteur de rôle
+    const handleSelectRoleChange = (selectedOption) => {
+        setEditedUser(prevState => ({ ...prevState, roleId: selectedOption.value }));
     };
 
     // Fonction pour sauvegarder les modifications
@@ -186,19 +205,15 @@ const AllUsers = () => {
                                                 </td>
                                                 <td>
                                                     {editUserId === user.id ? (
-                                                        <select
-                                                            name="role"
-                                                            value={editedUser.role}
-                                                            onChange={handleInputChange}
-                                                        >
-                                                            <option value="Admin">Admin</option>
-                                                            <option value="Recruteur">Recruteur</option>
-                                                            <option value="Employe">Employe</option>
-                                                            <option value="Formateur">Formateur</option>
-                                                            <option value="DirecteurRH">DirecteurRH</option>
-                                                        </select>
+                                                        <Select
+                                                            name="roleId"
+                                                            value={roles.find(role => role.value === editedUser.roleId)}
+                                                            onChange={handleSelectRoleChange}
+                                                            options={roles}
+                                                            placeholder="Sélectionnez un rôle"
+                                                        />
                                                     ) : (
-                                                        user.role
+                                                        user.Role ? user.Role.name : 'N/A'
                                                     )}
                                                 </td>
                                                 <td>
@@ -206,7 +221,7 @@ const AllUsers = () => {
                                                         <Select
                                                             name="entrepriseId"
                                                             value={entreprises.find(ent => ent.value === editedUser.entrepriseId)}
-                                                            onChange={handleSelectChange}
+                                                            onChange={handleSelectEntrepriseChange}
                                                             options={entreprises}
                                                             placeholder="Sélectionnez une entreprise"
                                                         />

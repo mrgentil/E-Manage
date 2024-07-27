@@ -2,10 +2,11 @@ import bcrypt from 'bcryptjs';
 import { faker } from '@faker-js/faker';
 import User from './backend/models/userModel.js';
 import Entreprise from './backend/models/entrepriseModel.js';
+import Role from './backend/models/roleModel.js';
 import { sequelize } from './backend/config/db.js';
 
 // Fonction pour générer des entreprises fictives
-async function generateFakeEntreprises(count = 25) { // Set default count to 25
+async function generateFakeEntreprises(count = 25) {
     try {
         const entreprises = [];
 
@@ -44,33 +45,33 @@ async function generateFakeEntreprises(count = 25) { // Set default count to 25
 }
 
 // Fonction pour générer des utilisateurs fictifs
-async function generateFakeUsers(count = 25) { // Set default count to 25
+async function generateFakeUsers(count = 25) {
     try {
         const users = [];
         const salt = await bcrypt.genSalt(10); // Générer un sel pour le hachage de mot de passe
 
         const allEnterprises = await Entreprise.findAll(); // Récupérer toutes les entreprises
+        const allRoles = await Role.findAll(); // Récupérer tous les rôles
 
         for (let i = 0; i < count; i++) {
             const name = faker.person.fullName();
             const email = faker.internet.email();
             const phone = faker.phone.number();
             const address = faker.location.streetAddress();
-            const role = faker.helpers.arrayElement(['Admin', 'Recruteur', 'Employe', 'Formateur', 'DirecteurRH']);
             const password = await bcrypt.hash(faker.internet.password(), salt);
 
-            // Sélectionner une entreprise aléatoire
-            const randomEnterpriseIndex = Math.floor(Math.random() * allEnterprises.length);
-            const randomEnterprise = allEnterprises[randomEnterpriseIndex];
+            // Sélectionner une entreprise et un rôle aléatoire
+            const randomEnterprise = allEnterprises[Math.floor(Math.random() * allEnterprises.length)];
+            const randomRole = allRoles[Math.floor(Math.random() * allRoles.length)];
 
             const user = await User.create({
                 name,
                 email,
                 phone,
                 address,
-                role,
                 password,
-                entrepriseId: randomEnterprise.id // Attribuer l'ID de l'entreprise aléatoire
+                entrepriseId: randomEnterprise.id, // Attribuer l'ID de l'entreprise aléatoire
+                roleId: randomRole.id, // Attribuer l'ID du rôle aléatoire
             });
 
             users.push(user);
