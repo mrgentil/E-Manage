@@ -1,129 +1,51 @@
-import React, { useEffect, useState } from "react";
+import React, {useEffect, useState} from "react";
 import axios from "axios";
 import Header from "../../components/Header.jsx";
-import { Link } from "react-router-dom";
+import {Link} from "react-router-dom";
 import Loader from "../../components/Loader.jsx";
-import { FaTrash, FaEdit, FaCheck } from "react-icons/fa";
-import { toast } from "react-toastify";
+import {FaTrash, FaEdit, FaCheck} from "react-icons/fa";
+import {toast} from "react-toastify";
 import Select from 'react-select';
 
 const AllUsers = () => {
     const [users, setUsers] = useState([]);
-    const [entreprises, setEntreprises] = useState([]);
-    const [roles, setRoles] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
-    const [editUserId, setEditUserId] = useState(null);
-    const [editedUser, setEditedUser] = useState({});
 
-    // Fonction pour récupérer les utilisateurs
-    const fetchUsers = async (page) => {
-        try {
-            const response = await axios.get('http://localhost:5000/api/users', { params: { page, limit: 15 } });
-            setUsers(response.data.rows);
-            setTotalPages(Math.ceil(response.data.count / 15));
-            setLoading(false);
-        } catch (err) {
-            setError(err.message);
-            setLoading(false);
-        }
-    };
-
-    // Fonction pour récupérer les entreprises
-    const fetchEntreprises = async () => {
-        try {
-            const response = await axios.get('http://localhost:5000/api/entreprises');
-            setEntreprises(response.data.map(ent => ({
-                value: ent.id,
-                label: ent.name
-            })));
-        } catch (err) {
-            setError(err.message);
-        }
-    };
-
-    // Fonction pour récupérer les rôles
-    const fetchRoles = async () => {
-        try {
-            const response = await axios.get('http://localhost:5000/api/roles');
-            setRoles(response.data.map(role => ({
-                value: role.id,
-                label: role.name
-            })));
-        } catch (err) {
-            setError(err.message);
-        }
-    };
-
-    // Hook d'effet pour récupérer les données au chargement du composant
     useEffect(() => {
-        fetchUsers(currentPage);
-        fetchEntreprises();
-        fetchRoles();
+        const fetchUsers = async () => {
+            try {
+                const config = {
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem('token')}`, // Assurez-vous que le token est récupéré correctement
+                    },
+                };
+                const response = await axios.get(`http://localhost:5000/api/users?page=${currentPage}&pageSize=10`, config);
+                setUsers(response.data.users);
+                setTotalPages(response.data.totalPages);
+            } catch (error) {
+                console.error('Failed to fetch users:', error);
+                toast.error('Failed to fetch users. Please try again later.');
+            }
+        };
+
+        fetchUsers();
     }, [currentPage]);
 
-    // Fonction pour gérer le clic sur le bouton d'édition
-    const handleEditClick = (user) => {
-        setEditUserId(user.id);
-        setEditedUser(user);
+    const handlePreviousPage = () => {
+        setCurrentPage((prev) => Math.max(prev - 1, 1));
     };
 
-    // Fonction pour gérer les changements dans les champs de saisie
-    const handleInputChange = (e) => {
-        const { name, value } = e.target;
-        setEditedUser(prevState => ({ ...prevState, [name]: value }));
-    };
-
-    // Fonction pour gérer les changements dans le sélecteur d'entreprise
-    const handleSelectEntrepriseChange = (selectedOption) => {
-        setEditedUser(prevState => ({ ...prevState, entrepriseId: selectedOption.value }));
-    };
-
-    // Fonction pour gérer les changements dans le sélecteur de rôle
-    const handleSelectRoleChange = (selectedOption) => {
-        setEditedUser(prevState => ({ ...prevState, roleId: selectedOption.value }));
-    };
-
-    // Fonction pour sauvegarder les modifications
-    const handleSaveClick = async () => {
-        try {
-            console.log("Updating user with data: ", editedUser); // Ajout du débogage
-            const response = await axios.put(`http://localhost:5000/api/users/${editedUser.id}`, editedUser, { withCredentials: true });
-            console.log("API response: ", response.data); // Ajout du débogage
-            toast.success('Utilisateur mis à jour avec succès!');
-            setEditUserId(null);
-            fetchUsers(currentPage);
-        } catch (err) {
-            console.error('Erreur lors de la mise à jour!', err); // Ajout du débogage
-            toast.error('Erreur lors de la mise à jour!');
-        }
-    };
-
-    // Fonction pour aller à la page suivante
     const handleNextPage = () => {
-        if (currentPage < totalPages) {
-            setCurrentPage(prevPage => prevPage + 1);
-        }
+        setCurrentPage((prev) => Math.min(prev + 1, totalPages));
     };
-
-    // Fonction pour aller à la page précédente
-    const handlePrevPage = () => {
-        if (currentPage > 1) {
-            setCurrentPage(prevPage => prevPage - 1);
-        }
-    };
-
-    if (loading) return <Loader />;
-    if (error) return <p>Erreur: {error}</p>;
 
     return (
         <div className="page-wrapper">
             <div className="page-content">
                 <div className="main-container">
                     <Link to="/home" className="theme-switch" target="_blank"></Link>
-                    <Header />
+                    <Header/>
                     <div className="page-header">
                         <ol className="breadcrumb">
                             <li className="breadcrumb-item">Liste des utilisateurs</li>
@@ -148,97 +70,17 @@ const AllUsers = () => {
                                             <th>Téléphone</th>
                                             <th>Adresse</th>
                                             <th>Role</th>
-                                            <th>Entreprise</th>
                                             <th>Actions</th>
                                         </tr>
                                         </thead>
                                         <tbody>
-                                        {users.map(user => (
+                                        {users.map((user) => (
                                             <tr key={user.id}>
-                                                <td>
-                                                    {editUserId === user.id ? (
-                                                        <input
-                                                            type="text"
-                                                            name="name"
-                                                            value={editedUser.name}
-                                                            onChange={handleInputChange}
-                                                        />
-                                                    ) : (
-                                                        user.name
-                                                    )}
-                                                </td>
-                                                <td>
-                                                    {editUserId === user.id ? (
-                                                        <input
-                                                            type="email"
-                                                            name="email"
-                                                            value={editedUser.email}
-                                                            onChange={handleInputChange}
-                                                        />
-                                                    ) : (
-                                                        user.email
-                                                    )}
-                                                </td>
-                                                <td>
-                                                    {editUserId === user.id ? (
-                                                        <input
-                                                            type="text"
-                                                            name="phone"
-                                                            value={editedUser.phone}
-                                                            onChange={handleInputChange}
-                                                        />
-                                                    ) : (
-                                                        user.phone
-                                                    )}
-                                                </td>
-                                                <td>
-                                                    {editUserId === user.id ? (
-                                                        <input
-                                                            type="text"
-                                                            name="address"
-                                                            value={editedUser.address}
-                                                            onChange={handleInputChange}
-                                                        />
-                                                    ) : (
-                                                        user.address
-                                                    )}
-                                                </td>
-                                                <td>
-                                                    {editUserId === user.id ? (
-                                                        <Select
-                                                            name="roleId"
-                                                            value={roles.find(role => role.value === editedUser.roleId)}
-                                                            onChange={handleSelectRoleChange}
-                                                            options={roles}
-                                                            placeholder="Sélectionnez un rôle"
-                                                        />
-                                                    ) : (
-                                                        user.Role ? user.Role.name : 'N/A'
-                                                    )}
-                                                </td>
-                                                <td>
-                                                    {editUserId === user.id ? (
-                                                        <Select
-                                                            name="entrepriseId"
-                                                            value={entreprises.find(ent => ent.value === editedUser.entrepriseId)}
-                                                            onChange={handleSelectEntrepriseChange}
-                                                            options={entreprises}
-                                                            placeholder="Sélectionnez une entreprise"
-                                                        />
-                                                    ) : (
-                                                        user.Entreprise ? user.Entreprise.name : 'N/A'
-                                                    )}
-                                                </td>
-                                                <td>
-                                                    {editUserId === user.id ? (
-                                                        <>
-                                                            <FaCheck onClick={handleSaveClick} />
-                                                            <FaTrash onClick={() => setEditUserId(null)} />
-                                                        </>
-                                                    ) : (
-                                                        <FaEdit onClick={() => handleEditClick(user)} />
-                                                    )}
-                                                </td>
+                                                <td>{user.name}</td>
+                                                <td>{user.email}</td>
+                                                <td>{user.phone}</td>
+                                                <td>{user.address}</td>
+                                                <td>{user.Role.name}</td>
                                             </tr>
                                         ))}
                                         </tbody>
@@ -248,8 +90,15 @@ const AllUsers = () => {
                         </div>
                     </div>
                     <div className="pagination-buttons">
-                        <button onClick={handlePrevPage} disabled={currentPage === 1}>Précédent</button>
-                        <button onClick={handleNextPage} disabled={currentPage === totalPages}>Suivant</button>
+                        <button onClick={handlePreviousPage} disabled={currentPage === 1}>
+                            Previous
+                        </button>
+                        <span>
+                         Page {currentPage} of {totalPages}
+                </span>
+                        <button onClick={handleNextPage} disabled={currentPage === totalPages}>
+                            Next
+                        </button>
                     </div>
                 </div>
             </div>

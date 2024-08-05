@@ -1,7 +1,6 @@
 import { DataTypes, Model } from 'sequelize';
 import bcrypt from 'bcryptjs';
 import { sequelize } from '../config/db.js';
-import Entreprise from './entrepriseModel.js';
 import Role from "./roleModel.js";
 
 class User extends Model {
@@ -33,13 +32,6 @@ User.init({
         type: DataTypes.STRING,
         allowNull: true,
     },
-    entrepriseId: {
-        type: DataTypes.INTEGER,
-        references: {
-            model: Entreprise,
-            key: 'id',
-        },
-    },
     roleId: {
         type: DataTypes.INTEGER,
         references: {
@@ -66,7 +58,7 @@ User.init({
     },
 });
 
-User.belongsTo(Entreprise, { foreignKey: 'entrepriseId' });
+
 User.belongsTo(Role, { foreignKey: 'roleId' });
 
 

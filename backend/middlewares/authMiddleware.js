@@ -1,39 +1,62 @@
 import jwt from 'jsonwebtoken';
-import User from '../models/userModel.js'; // Assurez-vous que le chemin est correct pour votre projet
+import asyncHandler from 'express-async-handler';
+import User from '../models/userModel.js';
+import Role from '../models/roleModel.js';
 
-const protect = async (req, res, next) => {
+const protect = asyncHandler(async (req, res, next) => {
     let token;
 
-    if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+    if (
+        req.headers.authorization &&
+        req.headers.authorization.startsWith('Bearer')
+    ) {
         try {
             token = req.headers.authorization.split(' ')[1];
-            const decoded = jwt.verify(token, process.env.JWT_SECRET);
+            if (!token) {
+                res.status(401);
+                throw new Error('Not authorized, no token');
+            }
 
-            req.user = await User.findByPk(decoded.id, {
-                attributes: ['id', 'name', 'role']
+            // Verify token and extract payload
+            const decoded = jwt.verify(token, process.env.JWT_SECRET);
+            console.log('Decoded token:', decoded); // Log the decoded token
+
+            // Find the user by userId from the token
+            req.user = await User.findByPk(decoded.userId, {
+                include: [{ model: Role, attributes: ['name'] }]
             });
 
             if (!req.user) {
-                return res.status(401).json({ message: 'Not authorized, user not found' });
+                console.error('User not found with ID:', decoded.userId); // Log the missing user ID
+                res.status(401);
+                throw new Error('Not authorized, user not found');
             }
 
             next();
         } catch (error) {
-            console.error(error);
-            res.status(401).json({ message: 'Not authorized, token failed' });
+            console.error('Error decoding token:', error);
+            res.status(401);
+            if (error.name === 'TokenExpiredError') {
+                res.json({ message: 'Token expired', stack: error.stack });
+            } else if (error.name === 'JsonWebTokenError') {
+                res.json({ message: 'Invalid token', stack: error.stack });
+            } else {
+                res.json({ message: 'Not authorized, token failed', stack: error.stack });
+            }
         }
+    } else {
+        res.status(401);
+        throw new Error('Not authorized, no token');
     }
+});
 
-    if (!token) {
-        res.status(401).json({ message: 'Not authorized, no token' });
-    }
-};
 
 const admin = (req, res, next) => {
-    if (req.user && req.user.role === 'Admin') {
+    if (req.user && req.user.Role && req.user.Role.name === 'Administrateur') {
         next();
     } else {
-        res.status(401).json({ message: 'Not authorized as an admin' });
+        res.status(403);
+        throw new Error('Not authorized as an admin');
     }
 };
 

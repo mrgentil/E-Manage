@@ -1,12 +1,12 @@
 import express from 'express';
 import cors from 'cors';
+import morgan from 'morgan';
 import userRoutes from './routes/userRoutes.js';
-import entrepriseRoutes from './routes/entrepriseRoutes.js';
+import roleRoutes from './routes/roleRoutes.js';
 import { connectDB, sequelize } from './config/db.js';
 import * as dotenv from 'dotenv';
 import cookieParser from 'cookie-parser';
 import path from 'path';
-import roleRoutes from "./routes/roleRoutes.js";
 
 dotenv.config();
 
@@ -17,12 +17,15 @@ const app = express();
     await sequelize.sync();
 })();
 
+
+
+app.use(morgan('combined')); // Ajoute le logging des requêtes
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 app.use(cors({
-    origin: 'http://localhost:5173', // Replace with your frontend URL
+    origin: 'http://localhost:5173', // Remplacez par l'URL de votre frontend
     credentials: true,
 }));
 
@@ -32,7 +35,6 @@ app.use((req, res, next) => {
 });
 
 app.use('/api/users', userRoutes);
-app.use('/api/entreprises', entrepriseRoutes);
 app.use('/api/roles', roleRoutes);
 
 app.use((err, req, res, next) => {

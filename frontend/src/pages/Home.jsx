@@ -29,8 +29,6 @@ const Home = () => {
                                 <h3>Bienvenue, {userInfo?.user?.name}!</h3>
                                 <p>Email : {userInfo?.user?.email}</p>
                                 <p>Role de l'utilisateur : {userInfo?.user?.Role?.name}</p>
-                                <p>Entreprise de l'utilisateur : {userInfo?.user?.Entreprise?.name}</p>
-
                             </>
                         ) : (
                             <p>Loading user information...</p>

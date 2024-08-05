@@ -20,12 +20,15 @@ router.post('/login', loginUser);
 router.post('/logout', logoutUser);
 
 // Routes protégées
-router.get('/profile', protect, getUserProfile);
-router.put('/:id', updateUser);
+
+
 
 // Routes admin
-router.get('/', getAllUsers);
-router.delete('/:id', protect, deleteUser);
+router.get('/', protect, admin, getAllUsers);
+router.route('/:id')
+    .get(protect, getUserProfile)
+    .put(protect, updateUser)
+    .delete(protect, deleteUser);
 
 // Routes de réinitialisation de mot de passe
 router.post('/reset-password', resetPassword);
