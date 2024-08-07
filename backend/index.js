@@ -3,10 +3,12 @@ import cors from 'cors';
 import morgan from 'morgan';
 import userRoutes from './routes/userRoutes.js';
 import roleRoutes from './routes/roleRoutes.js';
+
 import { connectDB, sequelize } from './config/db.js';
 import * as dotenv from 'dotenv';
 import cookieParser from 'cookie-parser';
 import path from 'path';
+import leaveRequestRoutes from "./routes/leaveRequestRoutes.js";
 
 dotenv.config();
 
@@ -36,6 +38,8 @@ app.use((req, res, next) => {
 
 app.use('/api/users', userRoutes);
 app.use('/api/roles', roleRoutes);
+app.use('/api/leave-requests', leaveRequestRoutes);
+
 
 app.use((err, req, res, next) => {
     const statusCode = res.statusCode === 200 ? 500 : res.statusCode;

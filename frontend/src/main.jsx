@@ -7,6 +7,7 @@ import Home from './pages/Home.jsx';
 import Login from './pages/Login.jsx';
 import Register from "./pages/users/Register.jsx";
 import AllUsers from "./pages/users/AllUsers.jsx";
+import Employes from "./pages/users/Employes.jsx";
 import store from './redux/store';
 import PrivateRoute from './components/PrivateRoute.jsx';
 import ResetPassword from "./pages/users/ResetPassword.jsx";
@@ -23,6 +24,7 @@ const router = createBrowserRouter(
                 <Route path="home" element={<Home />} />
                 <Route path="register" element={<Register />} />
                 <Route path="users" element={<AllUsers />} />
+                <Route path="employes" element={<Employes />} />
             </Route>
         </Route>
     )

@@ -56,5 +56,5 @@ User.init({
 });
 
 User.belongsTo(Role, { foreignKey: 'roleId' });
-
+Role.hasMany(User, { foreignKey: 'roleId' });
 export default User;

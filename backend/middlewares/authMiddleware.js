@@ -50,6 +50,24 @@ const protect = asyncHandler(async (req, res, next) => {
     }
 });
 
+const authenticate = async (req, res, next) => {
+    const token = req.header('Authorization').replace('Bearer ', '');
+    try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const user = await User.findOne({ where: { id: decoded.userId } });
+
+        if (!user) {
+            throw new Error();
+        }
+
+        req.user = user;
+        next();
+    } catch (error) {
+        res.status(401).json({ message: 'Please authenticate.' });
+    }
+};
+
+
 
 const admin = (req, res, next) => {
     if (req.user && req.user.Role && req.user.Role.name === 'Administrateur') {
@@ -60,4 +78,4 @@ const admin = (req, res, next) => {
     }
 };
 
-export { protect, admin };
+export { protect, admin, authenticate };

@@ -46,9 +46,9 @@ const Navigation = () => {
                     </div>
                     <div className="sidebar-user-details">
                         <div className="user-profile">
-                            <img src="img/user2.png" className="profile-thumb" alt="User Thumb" />
-                            <h6 className="profile-name">{userInfo ? `Nom utilisateur connecté : ${userInfo?.user?.name}` : 'Nom utilisateur non connecté'}</h6>
-
+                            <img src="img/user2.png" className="profile-thumb" alt="User Thumb"/>
+                            <h6 className="profile-name">{userInfo?.user?.email}</h6>
+                            <h6 className="profile-name">{userInfo?.user?.Role?.name}</h6>
                             <ul className="profile-actions">
                                 <li>
                                     <a href="javascript:void(0)">
@@ -88,7 +88,12 @@ const Navigation = () => {
                                             <ul>
                                                 <li>
                                                     <Link to="/users" onClick={() => handleMenuClick('view-users')}>
-                                                        Voir Utilisateurs
+                                                        Les Utilisateurs
+                                                    </Link>
+                                                </li>
+                                                <li>
+                                                    <Link to="/employes" onClick={() => handleMenuClick('view-users')}>
+                                                        Les employé(e)s
                                                     </Link>
                                                 </li>
                                                 <li>
@@ -104,7 +109,7 @@ const Navigation = () => {
                                     <li>
                                         <Link to="/register" onClick={() => handleMenuClick('add-user')}>
                                             <i className="icon-user"></i>
-                                            <span className="menu-text">Ajouter Utilisateur</span>
+                                            <span className="menu-text">Les employés</span>
                                         </Link>
                                     </li>
                                 )}

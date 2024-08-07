@@ -8,9 +8,10 @@ import {
     logoutUser,
     updateUser,
     resetPassword,
-    updatePassword
+    updatePassword,
+    getCountUsers, getEmployees, getTotalEmployees
 } from '../controllers/userController.js';
-import {admin, protect} from '../middlewares/authMiddleware.js';
+import { admin, protect } from '../middlewares/authMiddleware.js';
 
 const router = express.Router();
 
@@ -18,12 +19,11 @@ const router = express.Router();
 router.post('/register', registerUser);
 router.post('/login', loginUser);
 router.post('/logout', logoutUser);
+router.get('/count', getCountUsers); // Utilisez GET ici
+router.get('/employees/count', getTotalEmployees);
+router.get('/employees', getEmployees); // Utilisez GET ici
 
 // Routes protégées
-
-
-
-// Routes admin
 router.get('/', protect, admin, getAllUsers);
 router.route('/:id')
     .get(protect, getUserProfile)

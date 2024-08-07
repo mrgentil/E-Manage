@@ -1,5 +1,4 @@
 import User from '../models/userModel.js';
-import Entreprise from '../models/entrepriseModel.js';
 import Role from '../models/roleModel.js';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
@@ -7,6 +6,7 @@ import {sendEmail} from "../../emailService.js";
 import asyncHandler from 'express-async-handler';
 import generateToken from "../utils/createToken.js";
 import {Op} from 'sequelize';
+import db from "express";
 
 // Enregistrement d'un utilisateur
 export const registerUser = async (req, res) => {
@@ -259,3 +259,79 @@ export const deleteUser = async (req, res) => {
         res.status(500).json({error: err.message});
     }
 };
+
+export const getCountUsers = async (req, res) => {
+    try {
+        const totalUsers = await User.count();
+        res.status(200).json({ total: totalUsers });
+    } catch (error) {
+        console.error('Failed to get user count:', error); // Ajout d'un log pour voir l'erreur
+        res.status(500).json({ message: 'Failed to get user count', error });
+    }
+};
+
+export const getEmployees = async (req, res) => {
+    try {
+        // Récupérer les paramètres de pagination de la requête
+        const page = parseInt(req.query.page, 10) || 1;
+        const pageSize = parseInt(req.query.pageSize, 10) || 10;
+        const offset = (page - 1) * pageSize;
+
+        // Trouver l'ID du rôle "Employé"
+        const role = await Role.findOne({ where: { name: 'Employé' } });
+
+        if (!role) {
+            return res.status(404).json({ message: 'Role "Employé" not found' });
+        }
+
+        // Trouver les employés avec l'ID du rôle
+        const { count, rows } = await User.findAndCountAll({
+            where: {
+                roleId: role.id,
+            },
+            include: {
+                model: Role,
+                attributes: ['name'], // Inclure le nom du rôle dans la réponse si nécessaire
+            },
+            limit: pageSize,
+            offset: offset,
+        });
+
+        // Calculer le nombre total de pages
+        const totalPages = Math.ceil(count / pageSize);
+
+        // Répondre avec les données paginées
+        res.status(200).json({
+            users: rows,
+            totalPages: totalPages,
+            currentPage: page,
+            totalUsers: count,
+        });
+    } catch (error) {
+        res.status(500).json({ message: 'Failed to get employees', error });
+    }
+};
+
+
+export const getTotalEmployees = async (req, res) => {
+    try {
+        // Find the role ID for "Employé"
+        const role = await Role.findOne({ where: { name: 'Employé' } });
+
+        if (!role) {
+            return res.status(404).json({ message: 'Role "Employé" not found' });
+        }
+
+        // Count users with the role ID
+        const employeeCount = await User.count({
+            where: {
+                roleId: role.id,
+            },
+        });
+
+        res.status(200).json({ total: employeeCount });
+    } catch (error) {
+        res.status(500).json({ message: 'Failed to get employee count', error });
+    }
+};
+
