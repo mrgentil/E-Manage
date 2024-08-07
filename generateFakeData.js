@@ -1,12 +1,11 @@
 import bcrypt from 'bcryptjs';
 import { faker } from '@faker-js/faker';
 import User from './backend/models/userModel.js';
-import Entreprise from './backend/models/entrepriseModel.js';
 import Role from './backend/models/roleModel.js';
 import { sequelize } from './backend/config/db.js';
 
 // Fonction pour générer des entreprises fictives
-async function generateFakeEntreprises(count = 25) {
+/*async function generateFakeEntreprises(count = 25) {
     try {
         const entreprises = [];
 
@@ -42,15 +41,14 @@ async function generateFakeEntreprises(count = 25) {
         console.error('Erreur lors de la génération des entreprises fictives :', error.message);
         throw error;
     }
-}
+}*/
 
 // Fonction pour générer des utilisateurs fictifs
-async function generateFakeUsers(count = 25) {
+async function generateFakeUsers(count = 30) {
     try {
         const users = [];
         const salt = await bcrypt.genSalt(10); // Générer un sel pour le hachage de mot de passe
 
-        const allEnterprises = await Entreprise.findAll(); // Récupérer toutes les entreprises
         const allRoles = await Role.findAll(); // Récupérer tous les rôles
 
         for (let i = 0; i < count; i++) {
@@ -60,8 +58,7 @@ async function generateFakeUsers(count = 25) {
             const address = faker.location.streetAddress();
             const password = await bcrypt.hash(faker.internet.password(), salt);
 
-            // Sélectionner une entreprise et un rôle aléatoire
-            const randomEnterprise = allEnterprises[Math.floor(Math.random() * allEnterprises.length)];
+            // Sélectionner une entreprise et un rôle aléatoire;
             const randomRole = allRoles[Math.floor(Math.random() * allRoles.length)];
 
             const user = await User.create({
@@ -70,7 +67,6 @@ async function generateFakeUsers(count = 25) {
                 phone,
                 address,
                 password,
-                entrepriseId: randomEnterprise.id, // Attribuer l'ID de l'entreprise aléatoire
                 roleId: randomRole.id, // Attribuer l'ID du rôle aléatoire
             });
 
@@ -89,8 +85,7 @@ async function generateFakeUsers(count = 25) {
 (async () => {
     try {
         await sequelize.sync(); // Synchroniser les modèles avec la base de données
-        await generateFakeEntreprises(25);
-        await generateFakeUsers(25);
+        await generateFakeUsers(30);
     } catch (error) {
         console.error('Erreur lors de la génération des données fictives :', error.message);
     }

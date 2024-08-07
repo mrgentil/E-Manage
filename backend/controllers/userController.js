@@ -11,20 +11,22 @@ import {Op} from 'sequelize';
 // Enregistrement d'un utilisateur
 export const registerUser = async (req, res) => {
     try {
-        const {name, email, phone, address, role, password} = req.body;
+        const { name, email, phone, address, roleId, password } = req.body;
 
-        if (!name || !email || !password || !role || !phone || !address) {
-            return res.status(400).json({message: 'Veuillez remplir tous les champs obligatoires'});
+        console.log('Received data:', { name, email, phone, address, roleId, password });
+
+        if (!name || !email || !password || !roleId || !phone || !address) {
+            return res.status(400).json({ message: 'Veuillez remplir tous les champs obligatoires' });
         }
 
-        const userExists = await User.findOne({where: {email}});
+        const userExists = await User.findOne({ where: { email } });
         if (userExists) {
-            return res.status(400).json({message: 'Cet utilisateur existe déjà'});
+            return res.status(400).json({ message: 'Cet utilisateur existe déjà' });
         }
 
-        const roleDoc = await Role.findOne({where: {name: role}});
+        const roleDoc = await Role.findByPk(roleId);
         if (!roleDoc) {
-            return res.status(404).json({message: 'Role non trouvé'});
+            return res.status(404).json({ message: 'Role non trouvé' });
         }
 
         const user = await User.create({
@@ -36,7 +38,7 @@ export const registerUser = async (req, res) => {
             password
         });
 
-        const token = jwt.sign({userId: user.id}, process.env.JWT_SECRET, {expiresIn: '1h'});
+        const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, { expiresIn: '1h' });
 
         const emailHtml = `
             <div style="font-family: Arial, sans-serif; line-height: 1.6;">
@@ -49,10 +51,10 @@ export const registerUser = async (req, res) => {
 
         await sendEmail(email, 'Bienvenue !', emailHtml);
 
-        res.status(201).json({token, user});
+        res.status(201).json({ token, user });
     } catch (err) {
         console.error(err);
-        res.status(500).json({message: "Erreur lors de l'enregistrement de l'utilisateur"});
+        res.status(500).json({ message: "Erreur lors de l'enregistrement de l'utilisateur" });
     }
 };
 
@@ -72,7 +74,7 @@ export const resetPassword = async (req, res) => {
             <div style="font-family: Arial, sans-serif; line-height: 1.6;">
                 <p>Bonjour ${user.name},</p>
                 <p>Cliquez sur le lien suivant pour réinitialiser votre mot de passe :</p>
-                <a href="http://localhost:5173/reset-password?token=${token}" style="color: blue; text-decoration: underline;">Réinitialiser le mot de passe</a>
+                <a href="http://localhost:5173/reset-password?token=${token}" style="color: #cd9d63; text-decoration: underline;">Réinitialiser le mot de passe</a>
                 <p>Merci.</p>
             </div>
         `;

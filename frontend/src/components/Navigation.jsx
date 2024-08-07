@@ -47,7 +47,7 @@ const Navigation = () => {
                     <div className="sidebar-user-details">
                         <div className="user-profile">
                             <img src="img/user2.png" className="profile-thumb" alt="User Thumb" />
-                            <h6 className="profile-name">{userInfo ? `Nom utilisateur connecté: ${userInfo?.user?.name}` : 'Nom utilisateur non connecté'}</h6>
+                            <h6 className="profile-name">{userInfo ? `Nom utilisateur connecté : ${userInfo?.user?.name}` : 'Nom utilisateur non connecté'}</h6>
 
                             <ul className="profile-actions">
                                 <li>
@@ -78,26 +78,36 @@ const Navigation = () => {
                                         <span className="menu-text">Dashboard</span>
                                     </Link>
                                 </li>
-                                <li className={`sidebar-dropdown ${activeMenu === 'users' ? 'active' : ''}`}>
-                                    <a href="#" onClick={() => handleMenuClick('users')}>
-                                        <i className="icon-user"></i>
-                                        <span className="menu-text">Utilisateurs</span>
-                                    </a>
-                                    <div className="sidebar-submenu">
-                                        <ul>
-                                            <li>
-                                                <Link to="/users" onClick={() => handleMenuClick('view-users')}>
-                                                    Voir Utilisateurs
-                                                </Link>
-                                            </li>
-                                            <li>
-                                                <Link to="/register" onClick={() => handleMenuClick('add-user')}>
-                                                    Ajouter Utilisateur
-                                                </Link>
-                                            </li>
-                                        </ul>
-                                    </div>
-                                </li>
+                                {userInfo?.user?.Role?.name === 'Administrateur' && (
+                                    <li className={`sidebar-dropdown ${activeMenu === 'users' ? 'active' : ''}`}>
+                                        <a href="#" onClick={() => handleMenuClick('users')}>
+                                            <i className="icon-user"></i>
+                                            <span className="menu-text">Utilisateurs</span>
+                                        </a>
+                                        <div className="sidebar-submenu">
+                                            <ul>
+                                                <li>
+                                                    <Link to="/users" onClick={() => handleMenuClick('view-users')}>
+                                                        Voir Utilisateurs
+                                                    </Link>
+                                                </li>
+                                                <li>
+                                                    <Link to="/register" onClick={() => handleMenuClick('add-user')}>
+                                                        Ajouter Utilisateur
+                                                    </Link>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </li>
+                                )}
+                                {userInfo?.user?.Role?.name !== 'Administrateur' && (
+                                    <li>
+                                        <Link to="/register" onClick={() => handleMenuClick('add-user')}>
+                                            <i className="icon-user"></i>
+                                            <span className="menu-text">Ajouter Utilisateur</span>
+                                        </Link>
+                                    </li>
+                                )}
                             </ul>
                         </div>
                     </div>

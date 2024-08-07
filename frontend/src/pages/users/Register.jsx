@@ -13,33 +13,26 @@ const Register = () => {
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [selectedRole, setSelectedRole] = useState(null);
-    const [selectedEntreprise, setSelectedEntreprise] = useState(null);
 
     const { data: roles, isLoading: rolesLoading } = useGetRolesQuery();
     const [register, { isLoading }] = useRegisterMutation();
     const dispatch = useDispatch();
 
-    const currentUserRole = useSelector(state => state.auth.role); // Récupérer le rôle de l'utilisateur connecté
+    const currentUserRole = useSelector(state => state.auth.role);
 
     useEffect(() => {
-        // Sélectionner par défaut le premier rôle disponible si aucun rôle n'est déjà sélectionné
         if (roles && roles.length > 0 && !selectedRole) {
-            setSelectedRole({ value: roles[0]._id, label: roles[0].name });
+            setSelectedRole({ value: roles[0].id, label: roles[0].name });
         }
     }, [roles, selectedRole]);
 
-    // Filtrer les options de rôle pour exclure celui de l'utilisateur connecté
     const filteredRoleOptions = roles?.filter(role => role.name !== currentUserRole)?.map(role => ({
-        value: role._id,
+        value: role.id,
         label: role.name
     })) || [];
 
     const handleRoleChange = (selectedOption) => {
         setSelectedRole(selectedOption);
-    };
-
-    const handleEntrepriseChange = (selectedOption) => {
-        setSelectedEntreprise(selectedOption);
     };
 
     const submitHandler = async (e) => {
@@ -55,16 +48,14 @@ const Register = () => {
             phone,
             address,
             password,
-            role: selectedRole?.value,
-            entreprise: selectedEntreprise?.value
+            roleId: selectedRole?.value, // Utilise `roleId` ici
         };
 
         console.log('Sending registration request:', userData);
 
         try {
-            const res = await register(userData).unwrap().data;
+            const res = await register(userData).unwrap();
             toast.success("Utilisateur enregistré avec succès");
-            // Dispatch an action to set credentials or handle authentication
         } catch (err) {
             console.error("Registration error:", err);
             toast.error(err.data?.message || "Une erreur s'est produite");
@@ -177,18 +168,6 @@ const Register = () => {
                                                         onChange={handleRoleChange}
                                                         options={filteredRoleOptions}
                                                         placeholder="Sélectionner un rôle..."
-                                                    />
-                                                </div>
-                                            </div>
-                                            <div className="col-xl-4 col-lg-4 col-md-4 col-sm-4 col-12">
-                                                <div className="form-group">
-                                                    <label htmlFor="inputEntreprise">Entreprise</label>
-                                                    <Select
-                                                        id="inputEntreprise"
-                                                        value={selectedEntreprise}
-                                                        onChange={handleEntrepriseChange}
-                                                        options={entrepriseOptions}
-                                                        placeholder="Sélectionner une entreprise..."
                                                     />
                                                 </div>
                                             </div>
