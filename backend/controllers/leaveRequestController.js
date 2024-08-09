@@ -3,18 +3,21 @@ import LeaveRequest from '../models/LeaveRequestModel.js';
 
 export const createLeaveRequest = async (req, res) => {
     const { startDate, endDate, reason } = req.body;
+
     try {
         const leaveRequest = await LeaveRequest.create({
             startDate,
             endDate,
             reason,
-            userId: req.user.id,
+            userId: req.user.id, // Utilise l'ID de l'utilisateur connecté
         });
+
         res.status(201).json(leaveRequest);
     } catch (error) {
         res.status(500).json({ message: 'Failed to create leave request', error });
     }
 };
+
 
 export const getLeaveBalance = async (req, res) => {
     try {

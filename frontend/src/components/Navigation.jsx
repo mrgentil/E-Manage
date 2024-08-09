@@ -107,12 +107,43 @@ const Navigation = () => {
                                 )}
                                 {userInfo?.user?.Role?.name !== 'Administrateur' && (
                                     <li>
-                                        <Link to="/register" onClick={() => handleMenuClick('add-user')}>
+                                        <Link to="/employes" onClick={() => handleMenuClick('view-employees')}>
                                             <i className="icon-user"></i>
                                             <span className="menu-text">Les employés</span>
                                         </Link>
                                     </li>
                                 )}
+                                {/* Onglet Congés */}
+                                <li className={`sidebar-dropdown ${activeMenu === 'leaves' ? 'active' : ''}`}>
+                                    <a href="#" onClick={() => handleMenuClick('leaves')}>
+                                        <i className="icon-calendar"></i>
+                                        <span className="menu-text">Congés</span>
+                                    </a>
+                                    <div className="sidebar-submenu">
+                                        <ul>
+                                            <li>
+                                                <Link to="/add-leave" onClick={() => handleMenuClick('request-leave')}>
+                                                    Demander congés
+                                                </Link>
+                                            </li>
+                                            <li>
+                                                <Link to="/voir-demandes-conge" onClick={() => handleMenuClick('view-leave-requests')}>
+                                                    Voir les demandes de congé
+                                                </Link>
+                                            </li>
+                                            <li>
+                                                <Link to="/conges-approuves" onClick={() => handleMenuClick('approved-leaves')}>
+                                                    Congés approuvés
+                                                </Link>
+                                            </li>
+                                            <li>
+                                                <Link to="/conges-refuses" onClick={() => handleMenuClick('rejected-leaves')}>
+                                                    Congés refusés
+                                                </Link>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </li>
                             </ul>
                         </div>
                     </div>

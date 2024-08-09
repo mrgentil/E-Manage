@@ -12,6 +12,7 @@ import store from './redux/store';
 import PrivateRoute from './components/PrivateRoute.jsx';
 import ResetPassword from "./pages/users/ResetPassword.jsx";
 import UpdatePassword from "./pages/users/UpdatePassword.jsx";
+import AddLeaves from "./pages/leaves/AddLeaves.jsx";
 
 const router = createBrowserRouter(
     createRoutesFromElements(
@@ -25,6 +26,7 @@ const router = createBrowserRouter(
                 <Route path="register" element={<Register />} />
                 <Route path="users" element={<AllUsers />} />
                 <Route path="employes" element={<Employes />} />
+                <Route path="add-leave" element={<AddLeaves />} />
             </Route>
         </Route>
     )

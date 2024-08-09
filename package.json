@@ -30,6 +30,8 @@
     "mysql2": "^3.10.2",
     "nodemailer": "^6.9.14",
     "nodemon": "^3.1.4",
+    "react-datepicker": "^7.3.0",
+    "react-quill": "^2.0.0",
     "react-select": "^5.8.0",
     "redux": "^5.0.1",
     "redux-thunk": "^3.1.0",
